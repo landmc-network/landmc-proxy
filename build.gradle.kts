@@ -52,6 +52,11 @@ dependencies {
     // proxy's own plugin folder; this one ships so the feature works out of the box.
     runtimeOnly(libs.h2)
 
+    // MariaDB is what the network runs on; without the driver in the jar the plugin
+    // starts, reads its config and then refuses to enable, which is a deployment that
+    // looks fine until the first server does not come up.
+    runtimeOnly(libs.mariadb)
+
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit.jupiter.params)
@@ -121,6 +126,15 @@ tasks.shadowJar {
  * list is a one-line change with no visible consequence at build time, so the build checks the
  * jar rather than relying on the comment being read.
  */
+/**
+ * Packages that must reach the runtime under their real names.
+ *
+ * H2 because its file format records class names; the JDBC drivers because the platform looks
+ * them up by name (DatabaseType.driverClassName) and because a driver is registered through
+ * META-INF/services, which a relocation rewrites out from under it.
+ */
+val relocatedDatabaseLibraries = listOf("org/h2/", "org/mariadb/")
+
 val checkDatabaseNotRelocated = tasks.register("checkDatabaseNotRelocated") {
     group = "verification"
     description = "Fails when H2 ends up relocated, which would tie the database file to one jar."
@@ -133,14 +147,16 @@ val checkDatabaseNotRelocated = tasks.register("checkDatabaseNotRelocated") {
         val relocated = ZipFile(jarFile.get().asFile).use { zip ->
             zip.entries().asSequence()
                 .map { it.name }
-                .filter { it.startsWith("pl/landmc/proxy/libs/org/h2/") }
+                .filter { name ->
+                    relocatedDatabaseLibraries.any { name.startsWith("pl/landmc/proxy/libs/$it") }
+                }
                 .take(1)
                 .toList()
         }
 
         check(relocated.isEmpty()) {
-            "H2 is relocated (${relocated.first()}). A database written by this jar could then " +
-                "only be opened by this jar - see the note in the shadowJar block."
+            "A database library is relocated (${relocated.first()}). See the note above " +
+                "relocatedDatabaseLibraries for why that breaks at runtime rather than at build time."
         }
     }
 }
