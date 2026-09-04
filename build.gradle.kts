@@ -1,3 +1,5 @@
+import java.util.zip.ZipFile
+
 plugins {
     `java-library`
     alias(libs.plugins.shadow)
@@ -109,6 +111,41 @@ tasks.shadowJar {
 
     mergeServiceFiles()
 }
+
+/**
+ * Fails the build if H2 ends up relocated after all.
+ *
+ * H2 writes Java class names into the .mv.db file, so a relocated build produces a database
+ * only that build can open - and the failure surfaces on somebody's server later, as a plugin
+ * that will not start on a database it wrote itself. Adding "org.h2" back to the relocation
+ * list is a one-line change with no visible consequence at build time, so the build checks the
+ * jar rather than relying on the comment being read.
+ */
+val checkDatabaseNotRelocated = tasks.register("checkDatabaseNotRelocated") {
+    group = "verification"
+    description = "Fails when H2 ends up relocated, which would tie the database file to one jar."
+    dependsOn(tasks.shadowJar)
+
+    val jarFile = tasks.shadowJar.flatMap { it.archiveFile }
+    inputs.file(jarFile)
+
+    doLast {
+        val relocated = ZipFile(jarFile.get().asFile).use { zip ->
+            zip.entries().asSequence()
+                .map { it.name }
+                .filter { it.startsWith("pl/landmc/proxy/libs/org/h2/") }
+                .take(1)
+                .toList()
+        }
+
+        check(relocated.isEmpty()) {
+            "H2 is relocated (${relocated.first()}). A database written by this jar could then " +
+                "only be opened by this jar - see the note in the shadowJar block."
+        }
+    }
+}
+
+tasks.named("check") { dependsOn(checkDatabaseNotRelocated) }
 
 tasks.build {
     dependsOn(tasks.shadowJar)
