@@ -89,6 +89,43 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice maintenanceStatus = Notice.chat("<green>Sieć> <gray>Tryb serwisowy: <white>{STATE}</white>.");
 
     @Comment("")
+    @Comment("Placeholder: {PLAYER} - uzywane przez /send")
+    @CustomKey("player-not-found")
+    public Notice playerNotFound = Notice.chat("<red>Błąd> <gray>Nie znaleziono gracza <white>{PLAYER}</white>.");
+
+    @Comment("Placeholdery: {PLAYER}, {SERVER}")
+    @CustomKey("send-success")
+    public Notice sendSuccess =
+            Notice.chat("<green>Sieć> <gray>Przeniesiono <white>{PLAYER}</white> na <white>{SERVER}</white>.");
+
+    @Comment("Placeholdery: {PLAYER}, {SERVER}")
+    @CustomKey("send-failed")
+    public Notice sendFailed =
+            Notice.chat("<red>Błąd> <gray>Nie udało się przenieść <white>{PLAYER}</white> na <white>{SERVER}</white>.");
+
+    @Comment("Placeholdery: {SERVER}, {COUNT}")
+    @CustomKey("send-success-all")
+    public Notice sendSuccessAll =
+            Notice.chat("<green>Sieć> <gray>Przeniesiono <white>{COUNT}</white> graczy na <white>{SERVER}</white>.");
+
+    @Comment("")
+    @Comment("Zgloszenie /helpop widziane przez ekipe. Placeholdery: {PLAYER}, {SERVER}, {MESSAGE}")
+    @CustomKey("helpop-report")
+    public Notice helpOpReport = Notice.chat(
+            "<gold>HelpOp> <white>{PLAYER}</white> <dark_gray>(<gray>{SERVER}<dark_gray>)<gray>: {MESSAGE}");
+
+    @Comment("Potwierdzenie dla zglaszajacego")
+    @CustomKey("helpop-sent")
+    public Notice helpOpSent =
+            Notice.chat("<green>Sieć> <gray>Zgłoszenie wysłane. Ekipa odpowie, gdy będzie dostępna.");
+
+    @Comment("")
+    @Comment("Czat ekipy. Placeholdery: {PLAYER}, {PREFIX}, {MESSAGE}")
+    @CustomKey("adminchat-format")
+    public Notice adminChatFormat =
+            Notice.chat("<dark_red>AC> {PREFIX}<white>{PLAYER}</white><dark_gray>: <gray>{MESSAGE}");
+
+    @Comment("")
     @Comment("Placeholder: {SERVER}, {TIME} - odpowiedz na /testmessage")
     @CustomKey("messaging-pong")
     public Notice messagingPong =

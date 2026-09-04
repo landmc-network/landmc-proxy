@@ -10,8 +10,10 @@ import java.util.Objects;
 import java.util.Optional;
 import org.slf4j.Logger;
 import pl.landmc.platform.component.ComponentFormatter;
+import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.player.PlayerPresenceService;
+import pl.landmc.proxy.routing.FallbackPolicy;
 import pl.landmc.proxy.routing.RoutingService;
 
 /**
@@ -24,6 +26,7 @@ public final class PlayerRoutingListener {
 
     private final RoutingService routing;
     private final PlayerPresenceService presence;
+    private final ProxyConfig config;
     private final ProxyMessages messages;
     private final ComponentFormatter formatter;
     private final Logger logger;
@@ -31,12 +34,14 @@ public final class PlayerRoutingListener {
     public PlayerRoutingListener(
             RoutingService routing,
             PlayerPresenceService presence,
+            ProxyConfig config,
             ProxyMessages messages,
             ComponentFormatter formatter,
             Logger logger) {
 
         this.routing = Objects.requireNonNull(routing, "routing");
         this.presence = Objects.requireNonNull(presence, "presence");
+        this.config = Objects.requireNonNull(config, "config");
         this.messages = Objects.requireNonNull(messages, "messages");
         this.formatter = Objects.requireNonNull(formatter, "formatter");
         this.logger = Objects.requireNonNull(logger, "logger");
@@ -71,23 +76,39 @@ public final class PlayerRoutingListener {
     }
 
     /**
-     * Moves a player to the fallback when a backend drops them.
+     * Moves a player to the fallback when a backend drops them - but only when the kick looks
+     * like a restart rather than a decision about that player.
      *
-     * <p>Only when they are not already being sent somewhere and the fallback is not the server
-     * that just kicked them - redirecting a player back to the server that refused them would
-     * loop.
+     * <p>{@link FallbackPolicy} makes that call; a ban or a moderation kick keeps its disconnect
+     * screen, because quietly dropping such a player into the lobby would hide it from them.
      */
     @Subscribe
     public void onKickedFromServer(KickedFromServerEvent event) {
         Optional<RegisteredServer> fallback = this.routing.fallback();
         String kickedFrom = event.getServer().getServerInfo().getName();
+        String reason = event.getServerKickReason().map(this.formatter::plain).orElse(null);
 
-        if (fallback.isEmpty() || fallback.get().getServerInfo().getName().equalsIgnoreCase(kickedFrom)) {
-            event.setResult(KickedFromServerEvent.DisconnectPlayer.create(
-                    this.formatter.format(this.messages.noFallbackKick)));
+        boolean redirect = fallback.isPresent()
+                && FallbackPolicy.shouldRedirect(
+                        this.config.fallback.enabled,
+                        event.kickedDuringServerConnect(),
+                        kickedFrom,
+                        fallback.get().getServerInfo().getName(),
+                        reason);
+
+        if (!redirect) {
+            // Leave the server's own kick screen alone when there is one; only replace it when
+            // the backend gave no reason and we still cannot move the player anywhere.
+            if (event.getServerKickReason().isEmpty()) {
+                event.setResult(KickedFromServerEvent.DisconnectPlayer.create(
+                        this.formatter.format(this.messages.noFallbackKick)));
+            }
             return;
         }
 
+        this.logger.info(
+                "Moving {} from {} to the fallback after a backend kick",
+                event.getPlayer().getUsername(), kickedFrom);
         event.setResult(KickedFromServerEvent.RedirectPlayer.create(fallback.get()));
     }
 

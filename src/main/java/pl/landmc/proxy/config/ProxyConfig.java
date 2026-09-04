@@ -20,6 +20,9 @@ public class ProxyConfig extends OkaeriConfig {
 
     public MaintenanceSection maintenance = new MaintenanceSection();
 
+    @Comment("")
+    public FallbackSection fallback = new FallbackSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -46,6 +49,14 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Uprawnienie omijajace tryb serwisowy.")
         @CustomKey("bypass-permission")
         public String bypassPermission = "landmc.maintenance.bypass";
+    }
+
+    public static class FallbackSection extends OkaeriConfig {
+
+        @Comment("Czy gracz wyrzucony z backendu ma trafic na fallback zamiast rozlaczenia.")
+        @Comment("Dotyczy tylko restartow i zamykania serwera - bany i kicki moderacyjne")
+        @Comment("zawsze trafiaja do gracza jako ekran rozlaczenia.")
+        public boolean enabled = true;
     }
 
     public static class MessagingSection extends OkaeriConfig {

@@ -41,9 +41,14 @@ dependencies {
     // Velocity ships PacketEvents' Velocity module as a plugin dependency, not a shaded one.
     compileOnly(libs.packetevents.velocity)
 
+    // Optional integration: read through RankProvider, which tolerates it being absent.
+    compileOnly(libs.luckperms.api)
+
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
+    testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.velocity.api)
+    testImplementation(libs.luckperms.api)
     testRuntimeOnly(libs.slf4j.simple)
     testRuntimeOnly(libs.junit.platform.launcher)
 }

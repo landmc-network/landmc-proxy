@@ -17,8 +17,11 @@ import pl.landmc.platform.notice.NoticeServiceProvider;
 import pl.landmc.platform.proxy.command.VelocityCommands;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.platform.proxy.packet.VelocityPacketEvents;
+import pl.landmc.proxy.command.AdminChatCommand;
+import pl.landmc.proxy.command.HelpOpCommand;
 import pl.landmc.proxy.command.LobbyCommand;
 import pl.landmc.proxy.command.MaintenanceCommand;
+import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
 import pl.landmc.proxy.config.ProxyConfig;
@@ -30,6 +33,7 @@ import pl.landmc.proxy.messaging.PingMessage;
 import pl.landmc.proxy.messaging.PongMessage;
 import pl.landmc.proxy.messaging.ProxyMessaging;
 import pl.landmc.proxy.player.PlayerPresenceService;
+import pl.landmc.proxy.rank.RankProvider;
 import pl.landmc.proxy.routing.RoutingService;
 import pl.landmc.proxy.server.ServerRegistry;
 
@@ -113,21 +117,26 @@ public final class ProxyBootstrap {
 
         this.startPacketEvents();
 
+        RankProvider ranks = RankProvider.create(this.logger);
+
         this.commands = VelocityCommands.builder(this.proxy, formatter, platformNotices, this.logger)
                 .commands(
                         new ServerCommand(servers, routing, notices),
                         new LobbyCommand(routing, notices),
+                        new SendCommand(this.proxy, servers, routing, notices),
                         new MaintenanceCommand(maintenance, notices),
+                        new HelpOpCommand(notices),
+                        new AdminChatCommand(notices, ranks),
                         new TestMessageCommand(this.bus, this.config, notices))
                 .build();
-        this.logger.info("Registered 4 commands.");
+        this.logger.info("Registered 7 commands.");
 
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
                 new MaintenanceListener(maintenance, this.messages, formatter));
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
-                new PlayerRoutingListener(routing, this.presence, this.messages, formatter, this.logger));
+                new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
 
         this.logger.info("Registered {} backend servers.", servers.count());
         if (!servers.exists(routing.fallbackName())) {
