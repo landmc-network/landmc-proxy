@@ -31,10 +31,12 @@ dependencies {
     // drift away from the code that declares it.
     annotationProcessor(libs.velocity.api)
 
-    // The platform. platform-database is deliberately absent: the proxy touches no SQL yet.
+    // The platform. The database arrived with the friends list - the first thing on the proxy
+    // that has to outlive a session.
     implementation(libs.platform.api)
     implementation(libs.platform.common)
     implementation(libs.platform.config)
+    implementation(libs.platform.database)
     implementation(libs.platform.messaging)
     implementation(libs.platform.proxy)
 
@@ -44,11 +46,16 @@ dependencies {
     // Optional integration: read through RankProvider, which tolerates it being absent.
     compileOnly(libs.luckperms.api)
 
+    // The default database for the friends list. Another driver can be dropped into the
+    // proxy's own plugin folder; this one ships so the feature works out of the box.
+    runtimeOnly(libs.h2)
+
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.junit.jupiter.params)
     testImplementation(libs.velocity.api)
     testImplementation(libs.luckperms.api)
+    testImplementation(libs.h2)
     testRuntimeOnly(libs.slf4j.simple)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
@@ -70,11 +77,20 @@ tasks.shadowJar {
     // Relocated: libraries another plugin might also shade at a different version. Not
     // relocated: Adventure, Gson and SLF4J, which Velocity provides and which must stay the
     // proxy's own classes, and pl.landmc.platform, which only this plugin loads.
+    //
+    // H2 is deliberately not relocated either, and that one is not a matter of taste. H2's
+    // MVStore writes Java class names into the database file, so a relocated build produces a
+    // file that only that build can open: not the H2 console, not a backup tool, and not the
+    // next version if the shade prefix ever changes. Verified by opening a proxy-written file
+    // with the stock h2 jar - it fails on a missing pl.landmc.proxy.libs.org.h2 class.
     val shaded = "pl.landmc.proxy.libs"
     listOf(
         "eu.okaeri",
         "dev.rollczi.litecommands",
         "com.eternalcode.multification",
+        // The connection pool and the ORM, which any other plugin may also shade.
+        "com.zaxxer.hikari",
+        "com.j256.ormlite",
         // The whole Jedis tree, not just redis.clients.jedis: it also ships
         // redis.clients.authentication, which a narrower rule leaves unrelocated.
         "redis.clients",

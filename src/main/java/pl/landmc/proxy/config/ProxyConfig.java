@@ -3,6 +3,8 @@ package pl.landmc.proxy.config;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import eu.okaeri.configs.annotation.CustomKey;
+import java.util.List;
+import pl.landmc.platform.database.DatabaseConfig;
 import pl.landmc.platform.messaging.redis.RedisConfig;
 
 /**
@@ -29,6 +31,22 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     @CustomKey("resource-pack")
     public ResourcePackSection resourcePack = new ResourcePackSection();
+
+    @Comment("")
+    @Comment("Lista znajomych - jedyna funkcja proxy, ktora przezywa restart,")
+    @Comment("wiec jedyna, ktora potrzebuje bazy. Wylaczona nie otwiera polaczenia.")
+    public FriendsSection friends = new FriendsSection();
+
+    @Comment("")
+    @Comment("Baza uzywana przez liste znajomych. Sekcja pochodzi z landmc-platform.")
+    public DatabaseConfig database = new DatabaseConfig();
+
+    @Comment("")
+    @CustomKey("help-progress")
+    public HelpProgressSection helpProgress = new HelpProgressSection();
+
+    @Comment("")
+    public VanishSection vanish = new VanishSection();
 
     @Comment("")
     @CustomKey("join-debug")
@@ -89,6 +107,20 @@ public class ProxyConfig extends OkaeriConfig {
         public boolean interceptGuiPackets = false;
 
         @Comment("")
+        @Comment("Egzekwowanie cooldownu komend przez proxy.")
+        @Comment("Domyslnie WYLACZONE: anulowanie komendy na Velocity dziala poprawnie")
+        @Comment("dopiero z SignedVelocity (MC 1.19.1+), a backend i tak egzekwuje")
+        @Comment("cooldown u siebie - proxy tylko synchronizuje stan miedzy serwerami.")
+        @CustomKey("enforce-commands-on-proxy")
+        public boolean enforceCommandsOnProxy = false;
+
+        @Comment("Komendy zwolnione z cooldownu. Logowanie MUSI tu byc:")
+        @Comment("zablokowanie /login cooldownem odcina gracza od serwera.")
+        @CustomKey("ignored-commands")
+        public List<String> ignoredCommands = List.of(
+                "login", "logowanie", "l", "register", "rejestracja", "reg", "2fa");
+
+        @Comment("")
         @CustomKey("command-cooldown-millis")
         public long commandCooldownMillis = 500L;
 
@@ -142,6 +174,48 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Odrzucanie ofert paczki od backendow, zeby gracz nie pobieral jej dwa razy.")
         @CustomKey("block-backend-offers")
         public boolean blockBackendOffers = true;
+    }
+
+    public static class FriendsSection extends OkaeriConfig {
+
+        @Comment("Komenda /friend. Wylaczona nie laczy sie z baza.")
+        public boolean enabled = false;
+
+        @Comment("")
+        @Comment("Gorny limit znajomych. Lista jest odczytywana przy kazdym /friend lista,")
+        @Comment("wiec bez limitu jeden gracz potrafi zrobic z niej ciezkie zapytanie.")
+        @CustomKey("max-friends")
+        public int maxFriends = 100;
+
+        @Comment("Ile dni zyje niezaakceptowane zaproszenie.")
+        @Comment("Bez tego tabela zaproszen rosnie w nieskonczonosc.")
+        @CustomKey("request-expiry-days")
+        public int requestExpiryDays = 14;
+
+        @Comment("")
+        @Comment("Kanal wtyczkowy otwierajacy GUI znajomych na backendzie.")
+        @Comment("Samo /friend bez argumentow prosi backend o otwarcie menu.")
+        @CustomKey("gui-enabled")
+        public boolean guiEnabled = true;
+    }
+
+    public static class HelpProgressSection extends OkaeriConfig {
+
+        @Comment("Przekazywanie backendowi nazwy wykonanej komendy, na kanale wtyczkowym.")
+        @Comment("Sluzy postepowi samouczka - backend nie widzi komend obslugiwanych przez proxy.")
+        public boolean enabled = true;
+    }
+
+    public static class VanishSection extends OkaeriConfig {
+
+        @Comment("Ukrywanie zvanishowanej administracji przed /msg i lista znajomych.")
+        @Comment("Bez tego zvanishowanego moderatora da sie wykryc przez /msg.")
+        public boolean enabled = true;
+
+        @Comment("Id pluginu vanish w Velocity - odpytywany refleksyjnie, wiec")
+        @Comment("jego brak niczego nie psuje, gracze sa wtedy po prostu widoczni.")
+        @CustomKey("plugin-id")
+        public String pluginId = "landmc-vanish";
     }
 
     public static class JoinDebugSection extends OkaeriConfig {

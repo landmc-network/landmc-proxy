@@ -186,6 +186,12 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice ignoreListEmpty = Notice.chat("<green>Sieć> <gray>Nikogo nie ignorujesz.");
 
     @Comment("")
+    @Comment("Cooldown komend - wysylane tylko przy enforce-commands-on-proxy. Placeholder: {TIME}")
+    @CustomKey("cooldown-command-blocked")
+    public Notice cooldownCommandBlocked =
+            Notice.chat("<red>Zwolnij! <gray>Poczekaj jeszcze <white>{TIME}</white>.");
+
+    @Comment("")
     @Comment("Cooldown GUI. Placeholder: {TIME}")
     @CustomKey("cooldown-gui-blocked")
     public Notice cooldownGuiBlocked = Notice.chat("<red>Zwolnij! <gray>Poczekaj jeszcze <white>{TIME}</white>.");
@@ -205,6 +211,95 @@ public class ProxyMessages extends OkaeriConfig {
     @CustomKey("messaging-disabled")
     public Notice messagingDisabled =
             Notice.chat("<red>Błąd> <gray>Komunikacja sieciowa jest wyłączona w konfiguracji.");
+
+    @Comment("")
+    @Comment("Lista znajomych. Placeholdery: {PLAYER}, {PLAYERS}, {COUNT}, {ONLINE}, {OFFLINE}, {LIMIT}")
+    @CustomKey("friend-request-sent")
+    public Notice friendRequestSent =
+            Notice.chat("<green>Znajomi> <gray>Wysłano zaproszenie do <white>{PLAYER}</white>.");
+
+    @CustomKey("friend-request-received")
+    public Notice friendRequestReceived = Notice.chat(
+            "<green>Znajomi> <gray>Zaproszenie od <white>{PLAYER}</white>."
+                    + "<newline><gray>Przyjmij: <white>/friend akceptuj {PLAYER}</white>");
+
+    @CustomKey("friend-request-already-sent")
+    public Notice friendRequestAlreadySent =
+            Notice.chat("<red>Błąd> <gray>Zaproszenie do <white>{PLAYER}</white> już czeka.");
+
+    @Comment("Gdy oboje zaprosili sie nawzajem - drugie zaproszenie od razu akceptuje pierwsze.")
+    @CustomKey("friend-request-accepted-instead")
+    public Notice friendRequestAcceptedInstead = Notice.chat(
+            "<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> zaprosił Cię wcześniej"
+                    + " - jesteście teraz znajomymi.");
+
+    @CustomKey("friend-request-accepted")
+    public Notice friendRequestAccepted =
+            Notice.chat("<green>Znajomi> <gray>Jesteś teraz znajomym gracza <white>{PLAYER}</white>.");
+
+    @CustomKey("friend-request-accepted-by-other")
+    public Notice friendRequestAcceptedByOther =
+            Notice.chat("<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> przyjął Twoje zaproszenie.");
+
+    @CustomKey("friend-request-declined")
+    public Notice friendRequestDeclined =
+            Notice.chat("<green>Znajomi> <gray>Odrzucono zaproszenie od <white>{PLAYER}</white>.");
+
+    @CustomKey("friend-no-request")
+    public Notice friendNoRequest =
+            Notice.chat("<red>Błąd> <gray>Nie masz zaproszenia od gracza <white>{PLAYER}</white>.");
+
+    @CustomKey("friend-already-friends")
+    public Notice friendAlreadyFriends =
+            Notice.chat("<red>Błąd> <gray>Gracz <white>{PLAYER}</white> jest już Twoim znajomym.");
+
+    @CustomKey("friend-self")
+    public Notice friendSelf = Notice.chat("<red>Błąd> <gray>Nie zaprosisz samego siebie.");
+
+    @CustomKey("friend-unknown-player")
+    public Notice friendUnknownPlayer =
+            Notice.chat("<red>Błąd> <gray>Gracz <white>{PLAYER}</white> nigdy nie był na sieci.");
+
+    @CustomKey("friend-list-full")
+    public Notice friendListFull =
+            Notice.chat("<red>Błąd> <gray>Masz już maksymalną liczbę znajomych (<white>{LIMIT}</white>).");
+
+    @CustomKey("friend-other-list-full")
+    public Notice friendOtherListFull =
+            Notice.chat("<red>Błąd> <gray>Gracz <white>{PLAYER}</white> ma już pełną listę znajomych.");
+
+    @CustomKey("friend-removed")
+    public Notice friendRemoved =
+            Notice.chat("<green>Znajomi> <gray>Usunięto <white>{PLAYER}</white> ze znajomych.");
+
+    @CustomKey("friend-removed-you")
+    public Notice friendRemovedYou =
+            Notice.chat("<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> usunął Cię ze znajomych.");
+
+    @CustomKey("friend-not-on-list")
+    public Notice friendNotOnList =
+            Notice.chat("<red>Błąd> <gray>Gracz <white>{PLAYER}</white> nie jest Twoim znajomym.");
+
+    @CustomKey("friend-list")
+    public Notice friendList = Notice.chat(
+            "<green>Znajomi</green> <gray>(<white>{COUNT}</white>)"
+                    + "<newline><gray>Online: <green>{ONLINE}"
+                    + "<newline><gray>Offline: <dark_gray>{OFFLINE}");
+
+    @CustomKey("friend-list-empty")
+    public Notice friendListEmpty = Notice.chat("<gray>Nie masz jeszcze znajomych.");
+
+    @CustomKey("friend-pending-requests")
+    public Notice friendPendingRequests =
+            Notice.chat("<green>Znajomi> <gray>Zaproszenia od: <white>{PLAYERS}</white>");
+
+    @CustomKey("friend-no-pending-requests")
+    public Notice friendNoPendingRequests = Notice.chat("<gray>Nie masz oczekujących zaproszeń.");
+
+    @Comment("Awaria bazy - szczegoly ladują w konsoli, nie u gracza.")
+    @CustomKey("friend-failed")
+    public Notice friendFailed =
+            Notice.chat("<red>Błąd> <gray>Lista znajomych jest chwilowo niedostępna.");
 
     @Comment("")
     @Comment("Nadawanie rang. Placeholdery: {RANK}, {PLAYER}, {TIME}")

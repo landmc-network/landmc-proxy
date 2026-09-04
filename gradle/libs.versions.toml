@@ -8,6 +8,9 @@
 # Must match the version published by landmc-platform.
 landmc-platform = "1.0.0-SNAPSHOT"
 
+# Embedded database, shipped so the friends list works before anyone configures MariaDB.
+h2 = "2.4.240"
+
 # Velocity 4 publishes Java 25 bytecode, which is why this project compiles with --release 25.
 velocity = "4.1.1"
 
@@ -27,6 +30,8 @@ velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "vel
 platform-api = { module = "pl.landmc:platform-api", version.ref = "landmc-platform" }
 platform-common = { module = "pl.landmc:platform-common", version.ref = "landmc-platform" }
 platform-config = { module = "pl.landmc:platform-config", version.ref = "landmc-platform" }
+platform-database = { module = "pl.landmc:platform-database", version.ref = "landmc-platform" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
 platform-messaging = { module = "pl.landmc:platform-messaging", version.ref = "landmc-platform" }
 platform-proxy = { module = "pl.landmc:platform-proxy", version.ref = "landmc-platform" }
 

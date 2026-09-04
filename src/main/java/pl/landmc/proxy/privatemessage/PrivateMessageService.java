@@ -1,6 +1,7 @@
 package pl.landmc.proxy.privatemessage;
 
 import com.eternalcode.multification.shared.Formatter;
+import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import java.util.List;
@@ -9,9 +10,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import pl.landmc.platform.config.ConfigService;
+import pl.landmc.platform.notice.NoticeServiceProvider;
+import pl.landmc.platform.notice.PlatformNotice;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyMessages;
+import pl.landmc.proxy.vanish.VanishProvider;
 
 /**
  * Private messages, the reply target, social spy and the ignore list.
@@ -29,6 +34,8 @@ public final class PrivateMessageService {
     private final VelocityNoticeService<ProxyMessages> notices;
     private final IgnoreStorage ignores;
     private final ConfigService configs;
+    private final VanishProvider vanish;
+    private final NoticeServiceProvider<CommandSource> platformNotices;
 
     /** Who last messaged whom, so {@code /r} knows where to go. Cleared on disconnect. */
     private final ConcurrentHashMap<UUID, UUID> replyTargets = new ConcurrentHashMap<>();
@@ -39,12 +46,16 @@ public final class PrivateMessageService {
     public PrivateMessageService(
             ProxyServer proxy,
             VelocityNoticeService<ProxyMessages> notices,
+            NoticeServiceProvider<CommandSource> platformNotices,
             IgnoreStorage ignores,
-            ConfigService configs) {
+            ConfigService configs,
+            VanishProvider vanish) {
         this.proxy = Objects.requireNonNull(proxy, "proxy");
         this.notices = Objects.requireNonNull(notices, "notices");
+        this.platformNotices = Objects.requireNonNull(platformNotices, "platformNotices");
         this.ignores = Objects.requireNonNull(ignores, "ignores");
         this.configs = Objects.requireNonNull(configs, "configs");
+        this.vanish = Objects.requireNonNull(vanish, "vanish");
     }
 
     /**
@@ -60,6 +71,17 @@ public final class PrivateMessageService {
 
         if (sender.getUniqueId().equals(receiver.getUniqueId())) {
             this.notices.viewer(sender, messages -> messages.messageToSelf);
+            return;
+        }
+
+        // A hidden moderator must answer exactly as an offline player does. Anything else -
+        // a different message, or even a different one of ours - turns /msg into a way to
+        // check who is watching.
+        if (!this.vanish.canSee(sender, receiver)) {
+            this.platformNotices.send(
+                    sender,
+                    PlatformNotice.PLAYER_NOT_FOUND,
+                    Placeholder.unparsed("player", receiver.getUsername()));
             return;
         }
 

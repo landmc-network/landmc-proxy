@@ -176,18 +176,11 @@ public final class PacketEventsGuiInterceptor implements GuiPacketInterceptor {
         this.notices.viewer(
                 player,
                 messages -> messages.cooldownGuiBlocked,
-                new Formatter().register("{TIME}", formatTime(remainingMillis)));
+                new Formatter().register("{TIME}", CooldownTime.format(remainingMillis)));
     }
 
     private static boolean hasBypass(Player player, String permission) {
         return permission != null && !permission.isBlank() && player.hasPermission(permission);
-    }
-
-    private static String formatTime(long remainingMillis) {
-        if (remainingMillis >= 1_000L) {
-            return String.format(Locale.ROOT, "%.2fs", remainingMillis / 1_000.0D);
-        }
-        return Math.max(1L, remainingMillis) + "ms";
     }
 
     private static long safeAdd(long value, long increment) {

@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import pl.landmc.platform.api.ModuleLifecycle;
 import pl.landmc.platform.component.ComponentFormatter;
 import pl.landmc.platform.config.ConfigService;
+import pl.landmc.platform.database.DatabaseService;
 import pl.landmc.platform.messaging.MessageBus;
 import pl.landmc.platform.notice.AudienceNoticeService;
 import pl.landmc.platform.notice.NoticeServiceProvider;
@@ -31,9 +32,11 @@ import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.cooldown.CooldownMessenger;
 import pl.landmc.proxy.cooldown.CooldownProtocol;
+import pl.landmc.proxy.help.HelpProgressProtocol;
 import pl.landmc.proxy.cooldown.GlobalCooldownService;
 import pl.landmc.proxy.cooldown.GuiPacketInterceptor;
 import pl.landmc.proxy.cooldown.PacketEventsGuiInterceptor;
+import pl.landmc.proxy.listener.CommandExecuteListener;
 import pl.landmc.proxy.listener.CooldownListener;
 import pl.landmc.proxy.listener.JoinDebugListener;
 import pl.landmc.proxy.listener.MaintenanceListener;
@@ -47,7 +50,11 @@ import pl.landmc.proxy.messaging.ProxyMessaging;
 import pl.landmc.proxy.player.PlayerPresenceService;
 import pl.landmc.proxy.privatemessage.IgnoreStorage;
 import pl.landmc.proxy.privatemessage.PrivateMessageService;
+import pl.landmc.proxy.friend.FriendGuiProtocol;
+import pl.landmc.proxy.friend.FriendRepository;
+import pl.landmc.proxy.friend.FriendService;
 import pl.landmc.proxy.rank.RankProvider;
+import pl.landmc.proxy.command.FriendCommand;
 import pl.landmc.proxy.command.RankCommand;
 import pl.landmc.proxy.command.SkinCommand;
 import pl.landmc.proxy.resourcepack.ManifestSource;
@@ -55,6 +62,7 @@ import pl.landmc.proxy.resourcepack.ResourcePackRebuiltMessage;
 import pl.landmc.proxy.resourcepack.ResourcePackService;
 import pl.landmc.proxy.routing.RoutingService;
 import pl.landmc.proxy.skin.SkinService;
+import pl.landmc.proxy.vanish.VanishProvider;
 import pl.landmc.proxy.server.ServerRegistry;
 
 /**
@@ -90,6 +98,8 @@ public final class ProxyBootstrap {
     private PlayerPresenceService presence;
     private PrivateMessageService privateMessages;
     private SkinService skins;
+    private DatabaseService database;
+    private FriendService friends;
 
     /** Commands that are always present; the optional ones are counted alongside them. */
     private static final int CORE_COMMAND_COUNT = 12;
@@ -137,6 +147,14 @@ public final class ProxyBootstrap {
 
         this.bus = ProxyMessaging.create(this.config, this.presence, this.logger);
         this.registerMessageHandlers();
+
+        // The database is registered before the bus so it is closed after it: a handler still
+        // draining a Redis message must not find the connection pool already shut.
+        if (this.config.friends.enabled) {
+            this.database = new DatabaseService(
+                    "landmc-proxy", this.config.database, this.dataDirectory, this.logger);
+            this.lifecycle.register(this.database);
+        }
         this.lifecycle.register(this.bus).enableAll();
         this.logger.info(
                 "Messaging connected ({}).",
@@ -146,8 +164,12 @@ public final class ProxyBootstrap {
 
         RankProvider ranks = RankProvider.create(this.logger);
 
+        VanishProvider vanish = VanishProvider.create(this.proxy, this.config, this.logger);
+        this.startFriends(vanish);
+
         IgnoreStorage ignores = this.configs.load(this.dataDirectory, "ignores.yml", IgnoreStorage.class);
-        this.privateMessages = new PrivateMessageService(this.proxy, notices, ignores, this.configs);
+        this.privateMessages = new PrivateMessageService(
+                this.proxy, notices, platformNotices, ignores, this.configs, vanish);
 
         Object[] optional = this.optionalCommands(notices, ranks);
 
@@ -180,7 +202,7 @@ public final class ProxyBootstrap {
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
-                new PlayerSessionListener(this.privateMessages, this.skins));
+                new PlayerSessionListener(this.privateMessages, this.skins, this.friends));
 
         this.startCooldown(notices);
         this.startResourcePack(formatter);
@@ -217,10 +239,17 @@ public final class ProxyBootstrap {
         // Closes the bus: fails the requests still waiting and shuts the transport's threads.
         this.lifecycle.disableAll();
 
+        if (this.friends != null) {
+            this.proxy.getChannelRegistrar().unregister(FriendGuiProtocol.CHANNEL);
+            this.friends = null;
+        }
+
         if (this.resourcePack != null) {
             this.resourcePack.close();
             this.resourcePack = null;
         }
+
+        this.proxy.getChannelRegistrar().unregister(HelpProgressProtocol.CHANNEL);
 
         this.guiInterceptor.close();
         this.guiInterceptor = GuiPacketInterceptor.DISABLED;
@@ -295,10 +324,23 @@ public final class ProxyBootstrap {
                 this.container.getInstance().orElseThrow(),
                 new CooldownListener(cooldowns, messenger, this.guiInterceptor));
 
+        // One listener for both: the proxy reacts to a command either to throttle it or to
+        // tell the backend it happened, and splitting that across two would mean parsing the
+        // command line twice on every command from every player.
+        if (this.config.helpProgress.enabled) {
+            this.proxy.getChannelRegistrar().register(HelpProgressProtocol.CHANNEL);
+        }
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(),
+                new CommandExecuteListener(cooldowns, this.config, notices));
+
         this.logger.info(
-                "Global cooldown {} (command {}ms, GUI {}ms).",
+                "Global cooldown {} (command {}ms {}, GUI {}ms).",
                 this.config.cooldown.enabled ? "enabled" : "disabled",
                 this.config.cooldown.commandCooldownMillis,
+                this.config.cooldown.enforceCommandsOnProxy
+                        ? "enforced on the proxy"
+                        : "synced to backends only",
                 this.config.cooldown.guiCooldownMillis);
     }
 
@@ -312,10 +354,14 @@ public final class ProxyBootstrap {
     private Object[] optionalCommands(
             VelocityNoticeService<ProxyMessages> notices, RankProvider ranks) {
 
-        java.util.List<Object> optional = new java.util.ArrayList<>(2);
+        java.util.List<Object> optional = new java.util.ArrayList<>(3);
 
         if (ranks.isAvailable()) {
             optional.add(new RankCommand(this.proxy, ranks, notices, this.logger));
+        }
+
+        if (this.friends != null) {
+            optional.add(new FriendCommand(this.friends, notices, this.config, this.logger));
         }
 
         if (this.config.skin.enabled && SkinService.isAvailable(this.logger)) {
@@ -325,6 +371,39 @@ public final class ProxyBootstrap {
         }
 
         return optional.toArray();
+    }
+
+    /**
+     * Brings the friends list up on the database opened with the other platform modules.
+     *
+     * <p>The only part of the proxy that outlives a session, and the only reason there is a
+     * database here at all - so the pool is only opened when the feature is on. The connection
+     * itself is established earlier, with the other platform modules; this creates the tables
+     * and sweeps stale invitations once it is up.
+     *
+     * @throws pl.landmc.platform.api.PlatformException when the database cannot be opened; a
+     *     friends list that silently forgets everything is worse than a proxy that says why
+     */
+    private void startFriends(VanishProvider vanish) {
+        if (this.database == null) {
+            this.logger.info("Friends are disabled in config.yml; no database connection is opened.");
+            return;
+        }
+
+        FriendRepository repository = new FriendRepository(this.database);
+        this.friends = new FriendService(
+                this.proxy, repository, this.database, this.config, vanish, this.logger);
+        this.friends.start();
+
+        if (this.config.friends.guiEnabled) {
+            this.proxy.getChannelRegistrar().register(FriendGuiProtocol.CHANNEL);
+        }
+
+        this.logger.info(
+                "Friends ready on {} (limit {}, requests expire after {} day(s)).",
+                this.config.database.type,
+                this.config.friends.maxFriends,
+                this.config.friends.requestExpiryDays);
     }
 
     /** Registers the login tracer, but only while it is switched on. */
