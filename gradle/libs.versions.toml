@@ -1,0 +1,38 @@
+# Dependency versions for landmc-proxy.
+#
+# Only what the proxy adds on top of the platform lives here. Everything the platform already
+# manages - Okaeri, LiteCommands, Multification, Jedis, Adventure - arrives transitively with
+# the platform modules, so its version is decided in one place: landmc-platform's own catalog.
+[versions]
+
+# Must match the version published by landmc-platform.
+landmc-platform = "1.0.0-SNAPSHOT"
+
+# Velocity 4 publishes Java 25 bytecode, which is why this project compiles with --release 25.
+velocity = "4.1.1"
+
+packetevents = "2.13.0"
+
+shadow = "9.6.1"
+
+junit = "6.1.3"
+slf4j = "2.0.17"
+
+[libraries]
+velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity" }
+
+platform-api = { module = "pl.landmc:platform-api", version.ref = "landmc-platform" }
+platform-common = { module = "pl.landmc:platform-common", version.ref = "landmc-platform" }
+platform-config = { module = "pl.landmc:platform-config", version.ref = "landmc-platform" }
+platform-messaging = { module = "pl.landmc:platform-messaging", version.ref = "landmc-platform" }
+platform-proxy = { module = "pl.landmc:platform-proxy", version.ref = "landmc-platform" }
+
+packetevents-velocity = { module = "com.github.retrooper:packetevents-velocity", version.ref = "packetevents" }
+
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
