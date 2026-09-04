@@ -6,7 +6,7 @@
 [versions]
 
 # Must match the version published by landmc-platform.
-landmc-platform = "1.0.0"
+landmc-platform = "1.1.0"
 
 # Embedded database, shipped so the friends list works before anyone configures MariaDB.
 h2 = "2.4.240"

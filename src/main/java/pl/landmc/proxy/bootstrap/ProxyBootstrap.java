@@ -12,6 +12,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import pl.landmc.platform.api.ModuleLifecycle;
 import pl.landmc.platform.component.ComponentFormatter;
+import pl.landmc.platform.config.ConfigPlaceholders;
 import pl.landmc.platform.config.ConfigService;
 import pl.landmc.platform.database.DatabaseService;
 import pl.landmc.platform.messaging.MessageBus;
@@ -132,7 +133,8 @@ public final class ProxyBootstrap {
         VelocityNoticeService<ProxyMessages> notices =
                 new VelocityNoticeService<>(this.proxy, locale -> this.messages, formatter);
 
-        this.configs = new ConfigService(notices.okaeriSerdes());
+        this.configs = new ConfigService(
+                ConfigPlaceholders.forPlugin(this.dataDirectory), notices.okaeriSerdes());
         this.config = this.configs.load(this.dataDirectory, "config.yml", ProxyConfig.class);
         this.messages = this.configs.load(this.dataDirectory, "messages.yml", ProxyMessages.class);
         this.logger.info("Loaded configuration.");
