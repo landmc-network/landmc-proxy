@@ -62,6 +62,9 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public SkinSection skin = new SkinSection();
 
+    @Comment("")
+    public MenusSection menus = new MenusSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -204,6 +207,37 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Samo /friend bez argumentow prosi backend o otwarcie menu.")
         @CustomKey("gui-enabled")
         public boolean guiEnabled = true;
+    }
+
+    /** Menu rysowane na backendzie, wypelniane danymi stad. */
+    public static class MenusSection extends OkaeriConfig {
+
+        @Comment("Komenda /serwery - lista serwerow w GUI.")
+        @CustomKey("servers-enabled")
+        public boolean serversEnabled = true;
+
+        @Comment("")
+        @Comment("Ktore serwery pokazac i pod jaka nazwa, w tej kolejnosci.")
+        @Comment("Wpisane recznie, bo lista z velocity.toml zawiera tez limbo i wszystko,")
+        @Comment("czego gracz nie ma wybierac - a kolejnosc w menu to decyzja, nie przypadek.")
+        @Comment("Serwer spoza tej listy nie pojawi sie w menu, nawet jesli istnieje.")
+        public Map<String, String> servers = new LinkedHashMap<>(Map.of("lobby", "Lobby"));
+
+        @Comment("")
+        @Comment("Ile milisekund czekac na polaczenie z serwerem, zanim menu oznaczy go jako")
+        @Comment("niedostepny. Menu otwiera sie po tym czasie, wiec dlugi timeout to dlugie")
+        @Comment("czekanie na komende, ktora gracz wlasnie wpisal.")
+        @Comment("Sprawdzamy otwarciem gniazda, nie pingiem Minecrafta: backend ma")
+        @Comment("enable-status=false, wiec na ping nie odpowiada i wyszedlby jako martwy.")
+        @CustomKey("reachability-timeout-millis")
+        public long reachabilityTimeoutMillis = 1_500L;
+
+        @Comment("")
+        @Comment("Co ile sekund sprawdzac dostepnosc serwerow. Sprawdzane w tle, wiec menu")
+        @Comment("otwiera sie natychmiast, a backendy sa odpytywane stala liczbe razy na minute")
+        @Comment("niezaleznie od tego, ilu graczy otworzy menu.")
+        @CustomKey("health-interval-seconds")
+        public int healthIntervalSeconds = 15;
     }
 
     public static class VouchersSection extends OkaeriConfig {

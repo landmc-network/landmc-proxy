@@ -359,6 +359,19 @@ public class ProxyMessages extends OkaeriConfig {
             Notice.chat("<red>Błąd> <gray>Lista znajomych jest chwilowo niedostępna.");
 
     @Comment("")
+    @Comment("Menu rysuje backend; to jest odpowiedz, gdy nie da sie go otworzyc -")
+    @Comment("gracz jest miedzy serwerami albo backend nie ma wtyczki menu.")
+    @CustomKey("menu-unavailable")
+    public Notice menuUnavailable =
+            Notice.chat("<red>Błąd> <gray>Nie udało się otworzyć menu. Spróbuj za chwilę.");
+
+    @Comment("")
+    @Comment("Gracz kliknal serwer, ktorego juz nie ma na liscie menu.")
+    @CustomKey("menu-server-unavailable")
+    public Notice menuServerUnavailable =
+            Notice.chat("<red>Błąd> <gray>Ten serwer jest niedostępny.");
+
+    @Comment("")
     @Comment("Nadawanie rang. Placeholdery: {RANK}, {PLAYER}, {TIME}")
     @CustomKey("rank-assigned")
     public Notice rankAssigned =

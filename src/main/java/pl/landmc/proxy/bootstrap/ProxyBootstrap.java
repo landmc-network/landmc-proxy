@@ -28,6 +28,7 @@ import pl.landmc.proxy.command.MaintenanceCommand;
 import pl.landmc.proxy.command.PrivateMessageCommands;
 import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
+import pl.landmc.proxy.command.ServerMenuCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
@@ -51,9 +52,13 @@ import pl.landmc.proxy.messaging.ProxyMessaging;
 import pl.landmc.proxy.player.PlayerPresenceService;
 import pl.landmc.proxy.privatemessage.IgnoreStorage;
 import pl.landmc.proxy.privatemessage.PrivateMessageService;
-import pl.landmc.proxy.friend.FriendGuiProtocol;
 import pl.landmc.proxy.friend.FriendRepository;
 import pl.landmc.proxy.friend.FriendService;
+import pl.landmc.proxy.menu.FriendMenuService;
+import pl.landmc.proxy.menu.MenuActions;
+import pl.landmc.proxy.menu.MenuBridge;
+import pl.landmc.proxy.menu.ServerHealth;
+import pl.landmc.proxy.menu.ServerMenuService;
 import pl.landmc.proxy.rank.RankProvider;
 import pl.landmc.proxy.voucher.VoucherService;
 import pl.landmc.proxy.command.BroadcastCommand;
@@ -104,6 +109,8 @@ public final class ProxyBootstrap {
     private SkinService skins;
     private DatabaseService database;
     private FriendService friends;
+    private MenuBridge menuBridge;
+    private ServerHealth serverHealth;
     private VoucherService vouchers;
 
     /** Commands that are always present; the optional ones are counted alongside them. */
@@ -178,7 +185,24 @@ public final class ProxyBootstrap {
         this.privateMessages = new PrivateMessageService(
                 this.proxy, notices, platformNotices, ignores, this.configs, vanish);
 
-        Object[] optional = this.optionalCommands(notices, ranks);
+        // The seam between the proxy, which owns what a menu shows, and the backend, which
+        // owns the inventory it is drawn in.
+        this.menuBridge = new MenuBridge(this.proxy, this.logger);
+        this.menuBridge.register();
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(), this.menuBridge);
+
+        this.serverHealth = new ServerHealth(this.proxy, this.config, this.logger);
+        if (this.config.menus.serversEnabled) {
+            this.serverHealth.start(this.container.getInstance().orElseThrow());
+        }
+
+        ServerMenuService serverMenu =
+                new ServerMenuService(this.proxy, this.config, this.serverHealth);
+        new MenuActions(this.proxy, this.friends, routing, serverMenu, notices, this.logger)
+                .registerOn(this.menuBridge);
+
+        Object[] optional = this.optionalCommands(notices, serverMenu, ranks);
 
         // LiteCommands ships a Duration resolver but does not register it; /setrank's optional
         // time argument is the reason this proxy wants one.
@@ -247,9 +271,16 @@ public final class ProxyBootstrap {
         // Closes the bus: fails the requests still waiting and shuts the transport's threads.
         this.lifecycle.disableAll();
 
-        if (this.friends != null) {
-            this.proxy.getChannelRegistrar().unregister(FriendGuiProtocol.CHANNEL);
-            this.friends = null;
+        this.friends = null;
+
+        if (this.serverHealth != null) {
+            this.serverHealth.stop();
+            this.serverHealth = null;
+        }
+
+        if (this.menuBridge != null) {
+            this.menuBridge.unregister();
+            this.menuBridge = null;
         }
 
         if (this.resourcePack != null) {
@@ -360,16 +391,28 @@ public final class ProxyBootstrap {
      * the proxy says so once, in the log.
      */
     private Object[] optionalCommands(
-            VelocityNoticeService<ProxyMessages> notices, RankProvider ranks) {
+            VelocityNoticeService<ProxyMessages> notices,
+            ServerMenuService serverMenu,
+            RankProvider ranks) {
 
-        java.util.List<Object> optional = new java.util.ArrayList<>(5);
+        java.util.List<Object> optional = new java.util.ArrayList<>(6);
 
         if (ranks.isAvailable()) {
             optional.add(new RankCommand(this.proxy, ranks, notices, this.logger));
         }
 
         if (this.friends != null) {
-            optional.add(new FriendCommand(this.friends, notices, this.config, this.logger));
+            optional.add(new FriendCommand(
+                    this.friends,
+                    new FriendMenuService(this.friends),
+                    this.menuBridge,
+                    notices,
+                    this.config,
+                    this.logger));
+        }
+
+        if (this.config.menus.serversEnabled) {
+            optional.add(new ServerMenuCommand(serverMenu, this.menuBridge, notices));
         }
 
         if (this.vouchers != null) {
@@ -407,10 +450,6 @@ public final class ProxyBootstrap {
         this.friends = new FriendService(
                 this.proxy, repository, this.database, this.config, vanish, this.logger);
         this.friends.start();
-
-        if (this.config.friends.guiEnabled) {
-            this.proxy.getChannelRegistrar().register(FriendGuiProtocol.CHANNEL);
-        }
 
         this.logger.info(
                 "Friends ready on {} (limit {}, requests expire after {} day(s)).",

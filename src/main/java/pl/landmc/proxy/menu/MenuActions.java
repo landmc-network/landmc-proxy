@@ -1,0 +1,151 @@
+package pl.landmc.proxy.menu;
+
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.server.RegisteredServer;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import pl.landmc.menus.protocol.MenuAction;
+import pl.landmc.menus.protocol.MenuKind;
+import pl.landmc.platform.proxy.notice.VelocityNoticeService;
+import pl.landmc.proxy.config.ProxyMessages;
+import pl.landmc.proxy.friend.FriendService;
+import pl.landmc.proxy.routing.RoutingService;
+
+/**
+ * What happens when somebody clicks something in a menu.
+ *
+ * <p>Two rules run through all of it.
+ *
+ * <p>An action is never trusted for what it says, only for who it came from. The argument is
+ * checked against what it is supposed to be - a player name, a server on the menu - before it
+ * reaches anything, so a hand-written action can ask for nothing a click could not.
+ *
+ * <p>And where a command already does the job, the action runs that command rather than
+ * reimplementing it. Removing a friend from the menu is {@code /friend usun}: the same checks,
+ * the same messages, and no second copy to forget to update. It is also the clearest possible
+ * statement of what a menu is allowed to do, which is exactly what its owner could type.
+ */
+public final class MenuActions {
+
+    /** What a Minecraft name may be. Anything else never becomes part of a command line. */
+    private static final Pattern PLAYER_NAME = Pattern.compile("[A-Za-z0-9_]{1,16}");
+
+    private final ProxyServer proxy;
+
+    /** Null when the friends system is switched off, in which case that menu has no actions. */
+    private final @Nullable FriendService friends;
+    private final RoutingService routing;
+    private final ServerMenuService servers;
+    private final VelocityNoticeService<ProxyMessages> notices;
+    private final Logger logger;
+
+    public MenuActions(
+            ProxyServer proxy,
+            @Nullable FriendService friends,
+            RoutingService routing,
+            ServerMenuService servers,
+            VelocityNoticeService<ProxyMessages> notices,
+            Logger logger) {
+
+        this.proxy = Objects.requireNonNull(proxy, "proxy");
+        this.friends = friends;
+        this.routing = Objects.requireNonNull(routing, "routing");
+        this.servers = Objects.requireNonNull(servers, "servers");
+        this.notices = Objects.requireNonNull(notices, "notices");
+        this.logger = Objects.requireNonNull(logger, "logger");
+    }
+
+    /**
+     * Registers this class as the handler for the menus it deals with.
+     *
+     * <p>The friends menu is only wired up when there is a friends system behind it. An action
+     * with no handler is ignored and logged at debug, which is the right answer for a click on
+     * a menu that cannot exist.
+     */
+    public void registerOn(MenuBridge bridge) {
+        if (this.friends != null) {
+            bridge.handler(MenuKind.FRIENDS, this::onFriendsAction);
+        }
+        bridge.handler(MenuKind.SERVERS, this::onServersAction);
+    }
+
+    private void onFriendsAction(Player player, MenuAction action) {
+        switch (action.action()) {
+            case "remove" -> this.runAsPlayer(player, "friend usun ", action.argument());
+            case "requests" -> this.dispatch(player, "friend zaproszenia");
+            case "join" -> this.joinFriend(player, action.argument());
+            default -> this.logger.debug("Unknown friends menu action: {}", action.action());
+        }
+    }
+
+    private void onServersAction(Player player, MenuAction action) {
+        if (!"connect".equals(action.action())) {
+            this.logger.debug("Unknown servers menu action: {}", action.action());
+            return;
+        }
+
+        // Only a server the menu offers. The configured list is the permission model here:
+        // /server has one, and this is the way a player without it changes servers.
+        Optional<RegisteredServer> target = this.servers.selectable(action.argument());
+        if (target.isEmpty()) {
+            this.notices.create()
+                    .viewer(player)
+                    .notice(messages -> messages.menuServerUnavailable)
+                    .send();
+            return;
+        }
+
+        this.routing.connect(player, target.get());
+    }
+
+    /** Follows a friend to wherever they are, if they are somewhere this player may see. */
+    private void joinFriend(Player player, String name) {
+        if (this.friends == null || !PLAYER_NAME.matcher(name).matches()) {
+            return;
+        }
+
+        Optional<Player> friend = this.proxy.getPlayer(name)
+                .filter(other -> this.friends.isVisiblyOnline(player, other.getUniqueId()));
+
+        Optional<RegisteredServer> target = friend
+                .flatMap(other -> this.friends.serverOf(player, other.getUniqueId()))
+                .flatMap(this.proxy::getServer);
+
+        if (target.isEmpty()) {
+            // They logged off, or went somewhere this player cannot see, between the menu being
+            // drawn and the click. Not an error - just no longer true.
+            this.notices.create()
+                    .viewer(player)
+                    .notice(messages -> messages.menuServerUnavailable)
+                    .send();
+            return;
+        }
+
+        this.routing.connect(player, target.get());
+    }
+
+    /** Runs a command on the player's behalf, with an argument that has been checked first. */
+    private void runAsPlayer(Player player, String commandPrefix, String name) {
+        if (!PLAYER_NAME.matcher(name).matches()) {
+            this.logger.debug("Refused a menu action naming {}", name);
+            return;
+        }
+
+        this.dispatch(player, commandPrefix + name);
+    }
+
+    private void dispatch(Player player, String commandLine) {
+        this.proxy.getCommandManager()
+                .executeAsync(player, commandLine)
+                .exceptionally(throwable -> {
+                    this.logger.error(
+                            "Menu command '{}' failed for {}",
+                            commandLine, player.getUsername(), throwable);
+                    return null;
+                });
+    }
+}

@@ -8,6 +8,9 @@
 # Must match the version published by landmc-platform.
 landmc-platform = "1.2.0"
 
+# The menu wire format, published by landmc-menus.
+landmc-menus = "1.0.0"
+
 # Embedded database, shipped so the friends list works before anyone configures MariaDB.
 h2 = "2.4.240"
 
@@ -29,6 +32,8 @@ slf4j = "2.0.17"
 
 [libraries]
 velocity-api = { module = "com.velocitypowered:velocity-api", version.ref = "velocity" }
+
+menus-api = { module = "pl.landmc:menus-api", version.ref = "landmc-menus" }
 
 platform-api = { module = "pl.landmc:platform-api", version.ref = "landmc-platform" }
 platform-common = { module = "pl.landmc:platform-common", version.ref = "landmc-platform" }

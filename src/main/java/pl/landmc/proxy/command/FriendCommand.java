@@ -2,7 +2,6 @@ package pl.landmc.proxy.command;
 
 import com.eternalcode.multification.shared.Formatter;
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
 import dev.rollczi.litecommands.annotations.argument.Arg;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
@@ -17,10 +16,11 @@ import org.slf4j.Logger;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
-import pl.landmc.proxy.friend.FriendGuiProtocol;
 import pl.landmc.proxy.friend.FriendRepository.AcceptOutcome;
 import pl.landmc.proxy.friend.FriendRepository.FriendProfile;
 import pl.landmc.proxy.friend.FriendService;
+import pl.landmc.proxy.menu.FriendMenuService;
+import pl.landmc.proxy.menu.MenuBridge;
 
 /**
  * {@code /friend} - the friends list.
@@ -37,22 +37,34 @@ import pl.landmc.proxy.friend.FriendService;
 public class FriendCommand {
 
     private final FriendService friends;
+    private final FriendMenuService menu;
+    private final MenuBridge bridge;
     private final VelocityNoticeService<ProxyMessages> notices;
     private final ProxyConfig config;
     private final Logger logger;
 
     public FriendCommand(
             FriendService friends,
+            FriendMenuService menu,
+            MenuBridge bridge,
             VelocityNoticeService<ProxyMessages> notices,
             ProxyConfig config,
             Logger logger) {
 
         this.friends = Objects.requireNonNull(friends, "friends");
+        this.menu = Objects.requireNonNull(menu, "menu");
+        this.bridge = Objects.requireNonNull(bridge, "bridge");
         this.notices = Objects.requireNonNull(notices, "notices");
         this.config = Objects.requireNonNull(config, "config");
         this.logger = Objects.requireNonNull(logger, "logger");
     }
 
+    /**
+     * Bare {@code /friend} opens the menu, with the list sent along in the same message.
+     *
+     * <p>The backend used to be told only to open a menu and then had to ask for the contents,
+     * which is a second round trip to deliver a list this side already had in its hand.
+     */
     @Execute
     void menu(@Context Player player) {
         if (!this.config.friends.guiEnabled) {
@@ -60,12 +72,16 @@ public class FriendCommand {
             return;
         }
 
-        Optional<ServerConnection> connection = player.getCurrentServer();
-        if (connection.isEmpty() || !this.sendOpenGui(connection.get())) {
-            // The backend has no menu, or refused the message: showing the list is a better
-            // answer than telling the player their own command is unavailable.
-            this.list(player);
-        }
+        this.menu.payload(player)
+                .thenAccept(payload -> {
+                    if (!this.bridge.send(player, payload)) {
+                        // The backend has no menu plugin, or the player is between servers.
+                        // Showing the list is a better answer than telling them their own
+                        // command is unavailable.
+                        this.list(player);
+                    }
+                })
+                .exceptionally(this.report(player, "menu"));
     }
 
     @Execute(name = "zapros", aliases = {"dodaj", "invite", "add"})
@@ -243,16 +259,6 @@ public class FriendCommand {
                 .notice(messages -> messages.friendRequestAcceptedByOther)
                 .formatter(new Formatter().register("{PLAYER}", accepter.getUsername()))
                 .send());
-    }
-
-    private boolean sendOpenGui(ServerConnection connection) {
-        try {
-            return connection.sendPluginMessage(
-                    FriendGuiProtocol.CHANNEL, FriendGuiProtocol.openGuiPayload());
-        }
-        catch (IllegalStateException exception) {
-            return false;
-        }
     }
 
     /** Logs the cause and tells the player once; a stack trace is not an answer to a command. */

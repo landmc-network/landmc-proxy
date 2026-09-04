@@ -36,8 +36,19 @@ dependencyResolutionManagement {
                     username = githubUser
                     password = githubToken
                 }
-                // Nothing else lives here, and every miss is a round trip with a login.
-                content { includeGroup("pl.landmc") }
+                // Only the platform's own modules; every miss is a round trip with a login.
+                content { includeModuleByRegex("pl\\.landmc", "platform-.*") }
+            }
+
+            // The wire format the menus travel in. It lives with the plugin that draws them,
+            // and this proxy compiles against it because it is the side that fills them in.
+            maven("https://maven.pkg.github.com/landmc-network/landmc-menus") {
+                name = "GitHubPackagesMenus"
+                credentials {
+                    username = githubUser
+                    password = githubToken
+                }
+                content { includeModule("pl.landmc", "menus-api") }
             }
         }
 

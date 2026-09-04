@@ -35,6 +35,11 @@ dependencies {
 
     // The platform. The database arrived with the friends list - the first thing on the proxy
     // that has to outlive a session.
+    // The menu wire format. Not relocated in the shadow jar: the same classes are
+    // compiled into the plugin that draws the menus, and a renamed package here would make a
+    // stack trace from either side impossible to line up with the other.
+    implementation(libs.menus.api)
+
     implementation(libs.platform.api)
     implementation(libs.platform.common)
     implementation(libs.platform.config)
