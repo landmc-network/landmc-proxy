@@ -36,6 +36,7 @@ import pl.landmc.proxy.listener.CooldownListener;
 import pl.landmc.proxy.listener.MaintenanceListener;
 import pl.landmc.proxy.listener.PlayerRoutingListener;
 import pl.landmc.proxy.listener.PlayerSessionListener;
+import pl.landmc.proxy.listener.ResourcePackListener;
 import pl.landmc.proxy.maintenance.MaintenanceService;
 import pl.landmc.proxy.messaging.PingMessage;
 import pl.landmc.proxy.messaging.PongMessage;
@@ -44,6 +45,9 @@ import pl.landmc.proxy.player.PlayerPresenceService;
 import pl.landmc.proxy.privatemessage.IgnoreStorage;
 import pl.landmc.proxy.privatemessage.PrivateMessageService;
 import pl.landmc.proxy.rank.RankProvider;
+import pl.landmc.proxy.resourcepack.ManifestSource;
+import pl.landmc.proxy.resourcepack.ResourcePackRebuiltMessage;
+import pl.landmc.proxy.resourcepack.ResourcePackService;
 import pl.landmc.proxy.routing.RoutingService;
 import pl.landmc.proxy.server.ServerRegistry;
 
@@ -80,6 +84,7 @@ public final class ProxyBootstrap {
     private PlayerPresenceService presence;
     private PrivateMessageService privateMessages;
     private GuiPacketInterceptor guiInterceptor = GuiPacketInterceptor.DISABLED;
+    private ResourcePackService resourcePack;
     private MessageBus bus;
 
     public ProxyBootstrap(
@@ -162,6 +167,7 @@ public final class ProxyBootstrap {
                 new PlayerSessionListener(this.privateMessages));
 
         this.startCooldown(notices);
+        this.startResourcePack(formatter);
 
         this.logger.info("Registered {} backend servers.", servers.count());
         if (!servers.exists(routing.fallbackName())) {
@@ -193,6 +199,11 @@ public final class ProxyBootstrap {
 
         // Closes the bus: fails the requests still waiting and shuts the transport's threads.
         this.lifecycle.disableAll();
+
+        if (this.resourcePack != null) {
+            this.resourcePack.close();
+            this.resourcePack = null;
+        }
 
         this.guiInterceptor.close();
         this.guiInterceptor = GuiPacketInterceptor.DISABLED;
@@ -274,7 +285,47 @@ public final class ProxyBootstrap {
                 this.config.cooldown.guiCooldownMillis);
     }
 
+    /**
+     * Brings resource-pack delivery up.
+     *
+     * <p>The manifest is read once here; after that the builder announces rebuilds over the
+     * message bus, which is what replaced polling an HTTP endpoint every fifteen seconds.
+     */
+    private void startResourcePack(ComponentFormatter formatter) {
+        if (!this.config.resourcePack.enabled) {
+            this.logger.info("Resource-pack delivery is disabled in config.yml.");
+            return;
+        }
+
+        this.resourcePack = new ResourcePackService(
+                this.proxy,
+                this.container,
+                new ManifestSource(this.config),
+                this.config,
+                formatter,
+                this.logger);
+
+        this.proxy.getChannelRegistrar().register(
+                pl.landmc.proxy.resourcepack.ResourcePackProtocol.CHANNEL);
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(),
+                new ResourcePackListener(this.resourcePack));
+
+        this.resourcePack.start();
+        this.logger.info(
+                "Resource-pack delivery enabled (initial connection {}).",
+                this.config.resourcePack.waitBeforeInitialServer ? "gated" : "not gated");
+    }
+
     private void registerMessageHandlers() {
+        // A rebuild anywhere on the network reaches every proxy immediately.
+        this.bus.subscribe(ResourcePackRebuiltMessage.class, (message, context) -> {
+            if (this.resourcePack != null) {
+                this.logger.info("Resource pack rebuilt ({}), re-reading the manifest.", message.sha1());
+                this.resourcePack.refresh("rebuild announced by " + context.source());
+            }
+        });
+
         this.bus.subscribe(PingMessage.class, (message, context) -> {
             this.logger.debug("Ping from {}", context.source());
             context.reply(new PongMessage(this.bus.serverId(), message.sentAt()));

@@ -67,6 +67,26 @@ class ProxyConfigurationTest {
     }
 
     @Test
+    void writesEveryKeyInKebabCase(@TempDir Path directory) throws IOException {
+        // Okaeri names a key after the field unless told otherwise, so a new field arrives as
+        // camelCase and sits next to kebab-case neighbours until somebody notices in a running
+        // proxy. Checking the whole document means the next @CustomKey cannot be forgotten.
+        for (String fileName : new String[] {"config.yml", "messages.yml"}) {
+            load(directory);
+            for (String line : Files.readAllLines(directory.resolve(fileName))) {
+                java.util.regex.Matcher key =
+                        java.util.regex.Pattern.compile("^\s*([A-Za-z0-9_-]+):(\s|$)").matcher(line);
+                if (key.find()) {
+                    assertEquals(
+                            key.group(1).toLowerCase(java.util.Locale.ROOT),
+                            key.group(1),
+                            fileName + " has a camelCase key: " + line.trim());
+                }
+            }
+        }
+    }
+
+    @Test
     void embedsThePlatformRedisSection(@TempDir Path directory) throws IOException {
         Loaded loaded = load(directory);
 

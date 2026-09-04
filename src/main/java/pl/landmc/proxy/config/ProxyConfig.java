@@ -26,6 +26,10 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public CooldownSection cooldown = new CooldownSection();
 
+    @Comment("")
+    @CustomKey("resource-pack")
+    public ResourcePackSection resourcePack = new ResourcePackSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -92,6 +96,45 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Trzymajacy wcisniety przycisk zalalby sobie czat bez tego limitu.")
         @CustomKey("gui-message-interval-millis")
         public long guiMessageIntervalMillis = 750L;
+    }
+
+    public static class ResourcePackSection extends OkaeriConfig {
+
+        @Comment("Paczka zasobow sieci wysylana przez proxy - gracz pobiera ja raz")
+        @Comment("dla calej sieci, a nie przy kazdej zmianie serwera.")
+        public boolean enabled = false;
+
+        @Comment("")
+        @Comment("Endpoint HTTP z manifestem paczki. Odpytywany RAZ przy starcie proxy;")
+        @Comment("o przebudowie proxy dowiaduje sie z wiadomosci przez Redis, nie z pollingu.")
+        @CustomKey("manifest-url")
+        public String manifestUrl = "http://127.0.0.1:8082/resourcepack/manifest.json";
+
+        @Comment("Naglowek X-Manifest-Token, jesli endpoint go wymaga.")
+        @CustomKey("manifest-token")
+        public String manifestToken = "";
+
+        @CustomKey("request-timeout-seconds")
+        public int requestTimeoutSeconds = 5;
+
+        @Comment("")
+        @Comment("Wstrzymanie pierwszego polaczenia do czasu zaladowania paczki.")
+        @Comment("UWAGA: przy wlaczonej opcji awaria hostingu paczki blokuje wejscie na siec.")
+        @CustomKey("wait-before-initial-server")
+        public boolean waitBeforeInitialServer = true;
+
+        @Comment("Maksymalny czas oczekiwania, potem gracz jest rozlaczany.")
+        @CustomKey("wait-timeout-seconds")
+        public int waitTimeoutSeconds = 90;
+
+        @CustomKey("wait-timeout-message")
+        public String waitTimeoutMessage =
+                "<red>Nie udało się załadować paczki zasobów na czas. Połącz się ponownie.";
+
+        @Comment("")
+        @Comment("Odrzucanie ofert paczki od backendow, zeby gracz nie pobieral jej dwa razy.")
+        @CustomKey("block-backend-offers")
+        public boolean blockBackendOffers = true;
     }
 
     public static class MessagingSection extends OkaeriConfig {

@@ -11,6 +11,7 @@ import pl.landmc.platform.messaging.transport.LocalMessageTransport;
 import pl.landmc.platform.messaging.transport.MessageTransport;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.player.PlayerPresenceService;
+import pl.landmc.proxy.resourcepack.ResourcePackRebuiltMessage;
 
 /**
  * Assembles the platform's message bus for this proxy.
@@ -53,7 +54,8 @@ public final class ProxyMessaging {
 
         MessageRegistry registry = new MessageRegistry()
                 .register(PingMessage.TYPE, PingMessage.class)
-                .register(PongMessage.TYPE, PongMessage.class);
+                .register(PongMessage.TYPE, PongMessage.class)
+                .register(ResourcePackRebuiltMessage.TYPE, ResourcePackRebuiltMessage.class);
 
         MessageSerializer serializer = new MessageSerializer(registry);
         MessageTransport transport = transport(config, serverId, serializer, logger);
