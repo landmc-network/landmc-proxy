@@ -117,7 +117,10 @@ class ProxyConfigurationTest {
         // A disconnect screen has to become a single Component; a Notice could not.
         String rendered = formatter.plain(formatter.format(loaded.messages().maintenanceKick));
 
-        assertTrue(rendered.contains("Przerwa techniczna"), rendered);
+        // The network's kick screens all lead with the domain, as they have since the first
+        // version of LandMC; the reason follows underneath.
+        assertTrue(rendered.startsWith("LANDMC.PL"), rendered);
+        assertTrue(rendered.contains("przerwa techniczna"), rendered);
     }
 
     @Test

@@ -36,15 +36,15 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("To nie jest Notice: gracz nie jest jeszcze w sieci, wiec da sie pokazac tylko ekran.")
     @CustomKey("maintenance-kick")
     public String maintenanceKick =
-            "<red><bold>Przerwa techniczna</bold></red>"
-                    + "<newline><newline><gray>Sieć LandMC jest chwilowo niedostępna."
+            "<green><bold>LANDMC.PL</bold>"
+                    + "<newline><newline><gray>Trwa przerwa techniczna."
                     + "<newline><gray>Spróbuj ponownie za kilka minut.";
 
     @Comment("")
     @Comment("Ekran rozlaczenia, gdy nie ma dokad przeniesc gracza.")
     @CustomKey("no-fallback-kick")
     public String noFallbackKick =
-            "<red><bold>Brak dostępnego serwera</bold></red>"
+            "<green><bold>LANDMC.PL</bold>"
                     + "<newline><newline><gray>Żaden serwer sieci nie jest teraz osiągalny."
                     + "<newline><gray>Spróbuj ponownie za chwilę.";
 
@@ -65,7 +65,7 @@ public class ProxyMessages extends OkaeriConfig {
 
     @Comment("Placeholder: {SERVER}")
     @CustomKey("connecting")
-    public Notice connecting = Notice.chat("<green>Sieć> <gray>Łączenie z <white>{SERVER}</white>...");
+    public Notice connecting = Notice.chat("<green><bold>SIEĆ</bold> <gray>Łączenie z <white>{SERVER}</white>...");
 
     @Comment("Placeholder: {SERVER}")
     @CustomKey("transfer-failed")
@@ -75,18 +75,18 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("")
     @Comment("Placeholder: {SERVERS} - lista rozdzielona przecinkami")
     @CustomKey("server-list")
-    public Notice serverList = Notice.chat("<green>Sieć> <gray>Dostępne serwery: <white>{SERVERS}</white>");
+    public Notice serverList = Notice.chat("<green><bold>SIEĆ</bold> <gray>Dostępne serwery: <white>{SERVERS}</white>");
 
     @Comment("")
     @CustomKey("maintenance-enabled")
-    public Notice maintenanceEnabled = Notice.chat("<green>Sieć> <gray>Tryb serwisowy <white>włączony</white>.");
+    public Notice maintenanceEnabled = Notice.chat("<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>włączony</white>.");
 
     @CustomKey("maintenance-disabled")
-    public Notice maintenanceDisabled = Notice.chat("<green>Sieć> <gray>Tryb serwisowy <white>wyłączony</white>.");
+    public Notice maintenanceDisabled = Notice.chat("<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>wyłączony</white>.");
 
     @Comment("Placeholder: {STATE} - wlaczony / wylaczony")
     @CustomKey("maintenance-status")
-    public Notice maintenanceStatus = Notice.chat("<green>Sieć> <gray>Tryb serwisowy: <white>{STATE}</white>.");
+    public Notice maintenanceStatus = Notice.chat("<green><bold>SERWIS</bold> <gray>Tryb serwisowy: <white>{STATE}</white>.");
 
     @Comment("")
     @Comment("Placeholder: {PLAYER} - uzywane przez /send")
@@ -96,7 +96,7 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Placeholdery: {PLAYER}, {SERVER}")
     @CustomKey("send-success")
     public Notice sendSuccess =
-            Notice.chat("<green>Sieć> <gray>Przeniesiono <white>{PLAYER}</white> na <white>{SERVER}</white>.");
+            Notice.chat("<green><bold>SIEĆ</bold> <gray>Przeniesiono <white>{PLAYER}</white> na <white>{SERVER}</white>.");
 
     @Comment("Placeholdery: {PLAYER}, {SERVER}")
     @CustomKey("send-failed")
@@ -106,7 +106,7 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Placeholdery: {SERVER}, {COUNT}")
     @CustomKey("send-success-all")
     public Notice sendSuccessAll =
-            Notice.chat("<green>Sieć> <gray>Przeniesiono <white>{COUNT}</white> graczy na <white>{SERVER}</white>.");
+            Notice.chat("<green><bold>SIEĆ</bold> <gray>Przeniesiono <white>{COUNT}</white> graczy na <white>{SERVER}</white>.");
 
     @Comment("")
     @Comment("Zgloszenie /helpop widziane przez ekipe. Placeholdery: {PLAYER}, {SERVER}, {MESSAGE}")
@@ -117,7 +117,7 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Potwierdzenie dla zglaszajacego")
     @CustomKey("helpop-sent")
     public Notice helpOpSent =
-            Notice.chat("<green>Sieć> <gray>Zgłoszenie wysłane. Ekipa odpowie, gdy będzie dostępna.");
+            Notice.chat("<green><bold>HELPOP</bold> <gray>Zgłoszenie wysłane. Ekipa odpowie, gdy będzie dostępna.");
 
     @Comment("")
     @Comment("Czat ekipy. Placeholdery: {PLAYER}, {PREFIX}, {MESSAGE}")
@@ -150,10 +150,10 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice replyTargetOffline = Notice.chat("<red>Błąd> <gray>Ten gracz jest już offline.");
 
     @CustomKey("messages-enabled")
-    public Notice messagesEnabled = Notice.chat("<green>Sieć> <gray>Wiadomości prywatne <white>włączone</white>.");
+    public Notice messagesEnabled = Notice.chat("<green><bold>MSG</bold> <gray>Wiadomości prywatne <white>włączone</white>.");
 
     @CustomKey("messages-disabled")
-    public Notice messagesDisabled = Notice.chat("<green>Sieć> <gray>Wiadomości prywatne <white>wyłączone</white>.");
+    public Notice messagesDisabled = Notice.chat("<green><bold>MSG</bold> <gray>Wiadomości prywatne <white>wyłączone</white>.");
 
     @Comment("")
     @Comment("SocialSpy. Placeholdery: {SENDER}, {RECEIVER}, {MESSAGE}")
@@ -162,28 +162,28 @@ public class ProxyMessages extends OkaeriConfig {
             Notice.chat("<dark_gray>[SS] <white>{SENDER} <dark_gray>-> <white>{RECEIVER}<dark_gray>: <gray>{MESSAGE}");
 
     @CustomKey("social-spy-enabled")
-    public Notice socialSpyEnabled = Notice.chat("<green>Sieć> <gray>SocialSpy <white>włączony</white>.");
+    public Notice socialSpyEnabled = Notice.chat("<green><bold>MSG</bold> <gray>SocialSpy <white>włączony</white>.");
 
     @CustomKey("social-spy-disabled")
-    public Notice socialSpyDisabled = Notice.chat("<green>Sieć> <gray>SocialSpy <white>wyłączony</white>.");
+    public Notice socialSpyDisabled = Notice.chat("<green><bold>MSG</bold> <gray>SocialSpy <white>wyłączony</white>.");
 
     @Comment("")
     @Comment("Ignorowanie. Placeholdery: {PLAYER}, {PLAYERS}")
     @CustomKey("ignore-added")
-    public Notice ignoreAdded = Notice.chat("<green>Sieć> <gray>Ignorujesz gracza <white>{PLAYER}</white>.");
+    public Notice ignoreAdded = Notice.chat("<green><bold>MSG</bold> <gray>Ignorujesz gracza <white>{PLAYER}</white>.");
 
     @CustomKey("ignore-removed")
     public Notice ignoreRemoved =
-            Notice.chat("<green>Sieć> <gray>Nie ignorujesz już gracza <white>{PLAYER}</white>.");
+            Notice.chat("<green><bold>MSG</bold> <gray>Nie ignorujesz już gracza <white>{PLAYER}</white>.");
 
     @CustomKey("ignore-self")
     public Notice ignoreSelf = Notice.chat("<red>Błąd> <gray>Nie zignorujesz samego siebie.");
 
     @CustomKey("ignore-list")
-    public Notice ignoreList = Notice.chat("<green>Sieć> <gray>Ignorujesz: <white>{PLAYERS}</white>");
+    public Notice ignoreList = Notice.chat("<green><bold>MSG</bold> <gray>Ignorujesz: <white>{PLAYERS}</white>");
 
     @CustomKey("ignore-list-empty")
-    public Notice ignoreListEmpty = Notice.chat("<green>Sieć> <gray>Nikogo nie ignorujesz.");
+    public Notice ignoreListEmpty = Notice.chat("<green><bold>MSG</bold> <gray>Nikogo nie ignorujesz.");
 
     @Comment("")
     @Comment("Cooldown komend - wysylane tylko przy enforce-commands-on-proxy. Placeholder: {TIME}")
@@ -200,7 +200,7 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Placeholder: {SERVER}, {TIME} - odpowiedz na /testmessage")
     @CustomKey("messaging-pong")
     public Notice messagingPong =
-            Notice.chat("<green>Sieć> <gray>Odpowiedź z <white>{SERVER}</white> po <white>{TIME}</white>.");
+            Notice.chat("<green><bold>SIEĆ</bold> <gray>Odpowiedź z <white>{SERVER}</white> po <white>{TIME}</white>.");
 
     @Comment("Placeholder: {SERVER}, {REASON}")
     @CustomKey("messaging-failed")
@@ -216,11 +216,11 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Lista znajomych. Placeholdery: {PLAYER}, {PLAYERS}, {COUNT}, {ONLINE}, {OFFLINE}, {LIMIT}")
     @CustomKey("friend-request-sent")
     public Notice friendRequestSent =
-            Notice.chat("<green>Znajomi> <gray>Wysłano zaproszenie do <white>{PLAYER}</white>.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Wysłano zaproszenie do <white>{PLAYER}</white>.");
 
     @CustomKey("friend-request-received")
     public Notice friendRequestReceived = Notice.chat(
-            "<green>Znajomi> <gray>Zaproszenie od <white>{PLAYER}</white>."
+            "<green><bold>ZNAJOMI</bold> <gray>Zaproszenie od <white>{PLAYER}</white>."
                     + "<newline><gray>Przyjmij: <white>/friend akceptuj {PLAYER}</white>");
 
     @CustomKey("friend-request-already-sent")
@@ -230,20 +230,20 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Gdy oboje zaprosili sie nawzajem - drugie zaproszenie od razu akceptuje pierwsze.")
     @CustomKey("friend-request-accepted-instead")
     public Notice friendRequestAcceptedInstead = Notice.chat(
-            "<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> zaprosił Cię wcześniej"
+            "<green><bold>ZNAJOMI</bold> <gray>Gracz <white>{PLAYER}</white> zaprosił Cię wcześniej"
                     + " - jesteście teraz znajomymi.");
 
     @CustomKey("friend-request-accepted")
     public Notice friendRequestAccepted =
-            Notice.chat("<green>Znajomi> <gray>Jesteś teraz znajomym gracza <white>{PLAYER}</white>.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Jesteś teraz znajomym gracza <white>{PLAYER}</white>.");
 
     @CustomKey("friend-request-accepted-by-other")
     public Notice friendRequestAcceptedByOther =
-            Notice.chat("<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> przyjął Twoje zaproszenie.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Gracz <white>{PLAYER}</white> przyjął Twoje zaproszenie.");
 
     @CustomKey("friend-request-declined")
     public Notice friendRequestDeclined =
-            Notice.chat("<green>Znajomi> <gray>Odrzucono zaproszenie od <white>{PLAYER}</white>.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Odrzucono zaproszenie od <white>{PLAYER}</white>.");
 
     @CustomKey("friend-no-request")
     public Notice friendNoRequest =
@@ -270,11 +270,11 @@ public class ProxyMessages extends OkaeriConfig {
 
     @CustomKey("friend-removed")
     public Notice friendRemoved =
-            Notice.chat("<green>Znajomi> <gray>Usunięto <white>{PLAYER}</white> ze znajomych.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Usunięto <white>{PLAYER}</white> ze znajomych.");
 
     @CustomKey("friend-removed-you")
     public Notice friendRemovedYou =
-            Notice.chat("<green>Znajomi> <gray>Gracz <white>{PLAYER}</white> usunął Cię ze znajomych.");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Gracz <white>{PLAYER}</white> usunął Cię ze znajomych.");
 
     @CustomKey("friend-not-on-list")
     public Notice friendNotOnList =
@@ -291,7 +291,7 @@ public class ProxyMessages extends OkaeriConfig {
 
     @CustomKey("friend-pending-requests")
     public Notice friendPendingRequests =
-            Notice.chat("<green>Znajomi> <gray>Zaproszenia od: <white>{PLAYERS}</white>");
+            Notice.chat("<green><bold>ZNAJOMI</bold> <gray>Zaproszenia od: <white>{PLAYERS}</white>");
 
     @CustomKey("friend-no-pending-requests")
     public Notice friendNoPendingRequests = Notice.chat("<gray>Nie masz oczekujących zaproszeń.");
@@ -305,11 +305,11 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("Nadawanie rang. Placeholdery: {RANK}, {PLAYER}, {TIME}")
     @CustomKey("rank-assigned")
     public Notice rankAssigned =
-            Notice.chat("<green>Sieć> <gray>Gracz <white>{PLAYER}</white> ma teraz rangę <white>{RANK}</white>.");
+            Notice.chat("<green><bold>RANGA</bold> <gray>Gracz <white>{PLAYER}</white> ma teraz rangę <white>{RANK}</white>.");
 
     @CustomKey("rank-assigned-temporarily")
     public Notice rankAssignedTemporarily = Notice.chat(
-            "<green>Sieć> <gray>Gracz <white>{PLAYER}</white> ma rangę <white>{RANK}</white>"
+            "<green><bold>RANGA</bold> <gray>Gracz <white>{PLAYER}</white> ma rangę <white>{RANK}</white>"
                     + " przez <white>{TIME}</white>.");
 
     @CustomKey("rank-group-not-found")
@@ -330,10 +330,10 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("")
     @Comment("Komenda /skin. Placeholdery: {SKIN}, {SECONDS}")
     @CustomKey("skin-loading")
-    public Notice skinLoading = Notice.chat("<green>Sieć> <gray>Pobieram skin gracza <white>{SKIN}</white>...");
+    public Notice skinLoading = Notice.chat("<green><bold>SKIN</bold> <gray>Pobieram skin gracza <white>{SKIN}</white>...");
 
     @CustomKey("skin-applied")
-    public Notice skinApplied = Notice.chat("<green>Sieć> <gray>Ustawiono skin gracza <white>{SKIN}</white>.");
+    public Notice skinApplied = Notice.chat("<green><bold>SKIN</bold> <gray>Ustawiono skin gracza <white>{SKIN}</white>.");
 
     @CustomKey("skin-not-found")
     public Notice skinNotFound =
