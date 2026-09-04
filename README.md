@@ -45,10 +45,24 @@ czysto — bez pozostawionych wątków i połączeń.
 
 ## Build
 
-Platforma musi być dostępna lokalnie:
+Platforma jest pobierana z GitHub Packages jako wersja **1.0.0**, a nie ze snapshotu.
+Snapshot był nadpisywany w miejscu, więc dwa buildy tego samego commita potrafiły powstać
+przeciw różnym platformom — i raz build wywrócił się tylko dlatego, że trafił w moment
+publikacji nowego snapshotu.
+
+GitHub Packages wymaga uwierzytelnienia nawet dla publicznego pakietu, więc w
+`~/.gradle/gradle.properties` potrzebne są:
+
+```properties
+gpr.user=twoj-login-github
+gpr.token=ghp_token_z_uprawnieniem_read:packages
+```
+
+Alternatywnie, gdy i tak pracujesz nad platformą — wtedy token nie jest potrzebny, bo
+`mavenLocal` ma pierwszeństwo:
 
 ```bash
-cd ../landmc-platform && ./gradlew publishToMavenLocal
+cd ../landmc-platform && ./gradlew publishToMavenLocal -Pversion=1.0.0
 ```
 
 ```bash
