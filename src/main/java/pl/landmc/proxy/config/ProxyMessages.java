@@ -186,6 +186,11 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice ignoreListEmpty = Notice.chat("<green>Sieć> <gray>Nikogo nie ignorujesz.");
 
     @Comment("")
+    @Comment("Cooldown GUI. Placeholder: {TIME}")
+    @CustomKey("cooldown-gui-blocked")
+    public Notice cooldownGuiBlocked = Notice.chat("<red>Zwolnij! <gray>Poczekaj jeszcze <white>{TIME}</white>.");
+
+    @Comment("")
     @Comment("Placeholder: {SERVER}, {TIME} - odpowiedz na /testmessage")
     @CustomKey("messaging-pong")
     public Notice messagingPong =

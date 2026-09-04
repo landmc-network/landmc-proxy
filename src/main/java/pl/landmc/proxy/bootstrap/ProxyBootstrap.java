@@ -27,6 +27,12 @@ import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
+import pl.landmc.proxy.cooldown.CooldownMessenger;
+import pl.landmc.proxy.cooldown.CooldownProtocol;
+import pl.landmc.proxy.cooldown.GlobalCooldownService;
+import pl.landmc.proxy.cooldown.GuiPacketInterceptor;
+import pl.landmc.proxy.cooldown.PacketEventsGuiInterceptor;
+import pl.landmc.proxy.listener.CooldownListener;
 import pl.landmc.proxy.listener.MaintenanceListener;
 import pl.landmc.proxy.listener.PlayerRoutingListener;
 import pl.landmc.proxy.listener.PlayerSessionListener;
@@ -73,6 +79,7 @@ public final class ProxyBootstrap {
     private LiteCommands<CommandSource> commands;
     private PlayerPresenceService presence;
     private PrivateMessageService privateMessages;
+    private GuiPacketInterceptor guiInterceptor = GuiPacketInterceptor.DISABLED;
     private MessageBus bus;
 
     public ProxyBootstrap(
@@ -154,6 +161,8 @@ public final class ProxyBootstrap {
                 this.container.getInstance().orElseThrow(),
                 new PlayerSessionListener(this.privateMessages));
 
+        this.startCooldown(notices);
+
         this.logger.info("Registered {} backend servers.", servers.count());
         if (!servers.exists(routing.fallbackName())) {
             this.logger.warn(
@@ -184,6 +193,9 @@ public final class ProxyBootstrap {
 
         // Closes the bus: fails the requests still waiting and shuts the transport's threads.
         this.lifecycle.disableAll();
+
+        this.guiInterceptor.close();
+        this.guiInterceptor = GuiPacketInterceptor.DISABLED;
 
         if (this.packetEvents != null) {
             this.packetEvents.disable();
@@ -225,6 +237,43 @@ public final class ProxyBootstrap {
      * transport, so the messaging stack can be verified before any Paper node exists. A Paper
      * consumer registers the same pair on its side and answers for its own id.
      */
+    /**
+     * Brings the global cooldown up, with the packet-level part only when it can actually work.
+     *
+     * <p>The command cooldown and the backend synchronisation need nothing but plugin messages.
+     * Throttling menu clicks needs PacketEvents, so that half installs only when the plugin is
+     * present and the operator asked for it - a proxy without PacketEvents keeps the rest rather
+     * than losing the feature or refusing to start.
+     */
+    private void startCooldown(VelocityNoticeService<ProxyMessages> notices) {
+        GlobalCooldownService cooldowns = new GlobalCooldownService();
+        CooldownMessenger messenger = new CooldownMessenger(cooldowns, this.config);
+
+        this.proxy.getChannelRegistrar().register(CooldownProtocol.CHANNEL);
+
+        if (this.config.cooldown.enabled && this.config.cooldown.interceptGuiPackets) {
+            if (this.packetEvents == null) {
+                this.logger.warn(
+                        "GUI cooldown is enabled but PacketEvents is not installed;"
+                                + " menu clicks are not throttled by the proxy.");
+            }
+            else {
+                this.guiInterceptor = new PacketEventsGuiInterceptor(cooldowns, this.config, notices);
+                this.logger.info("GUI cooldown active (packet interception).");
+            }
+        }
+
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(),
+                new CooldownListener(cooldowns, messenger, this.guiInterceptor));
+
+        this.logger.info(
+                "Global cooldown {} (command {}ms, GUI {}ms).",
+                this.config.cooldown.enabled ? "enabled" : "disabled",
+                this.config.cooldown.commandCooldownMillis,
+                this.config.cooldown.guiCooldownMillis);
+    }
+
     private void registerMessageHandlers() {
         this.bus.subscribe(PingMessage.class, (message, context) -> {
             this.logger.debug("Ping from {}", context.source());

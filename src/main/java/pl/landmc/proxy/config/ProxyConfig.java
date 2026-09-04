@@ -23,6 +23,9 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public FallbackSection fallback = new FallbackSection();
 
+    @Comment("")
+    public CooldownSection cooldown = new CooldownSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -57,6 +60,38 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Dotyczy tylko restartow i zamykania serwera - bany i kicki moderacyjne")
         @Comment("zawsze trafiaja do gracza jako ekran rozlaczenia.")
         public boolean enabled = true;
+    }
+
+    public static class CooldownSection extends OkaeriConfig {
+
+        @Comment("Globalny cooldown wspolny dla wszystkich backendow.")
+        @Comment("Proxy trzyma stan, bo jako jedyne widzi gracza na wszystkich serwerach.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Blokowanie klikniec w GUI po stronie proxy, na poziomie pakietow.")
+        @Comment("Domyslnie WYLACZONE: przepisywanie pakietow ekwipunku na proxy potrafi")
+        @Comment("rozjechac klientow w innych wersjach niz serwer. Wlaczaj tylko wtedy,")
+        @Comment("gdy backend nie egzekwuje cooldownu sam.")
+        @Comment("Wymaga pluginu PacketEvents - bez niego ta czesc po prostu nie startuje.")
+        @CustomKey("intercept-gui-packets")
+        public boolean interceptGuiPackets = false;
+
+        @Comment("")
+        @CustomKey("command-cooldown-millis")
+        public long commandCooldownMillis = 500L;
+
+        @CustomKey("gui-cooldown-millis")
+        public long guiCooldownMillis = 250L;
+
+        @Comment("Uprawnienie omijajace cooldown.")
+        @CustomKey("bypass-permission")
+        public String bypassPermission = "landmc.cooldown.bypass";
+
+        @Comment("Jak czesto gracz moze dostac komunikat o cooldownie, w millis.")
+        @Comment("Trzymajacy wcisniety przycisk zalalby sobie czat bez tego limitu.")
+        @CustomKey("gui-message-interval-millis")
+        public long guiMessageIntervalMillis = 750L;
     }
 
     public static class MessagingSection extends OkaeriConfig {
