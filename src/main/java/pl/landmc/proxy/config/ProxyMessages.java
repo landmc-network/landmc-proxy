@@ -126,6 +126,66 @@ public class ProxyMessages extends OkaeriConfig {
             Notice.chat("<dark_red>AC> {PREFIX}<white>{PLAYER}</white><dark_gray>: <gray>{MESSAGE}");
 
     @Comment("")
+    @Comment("Wiadomosci prywatne. Placeholdery: {SENDER}, {RECEIVER}, {MESSAGE}")
+    @CustomKey("message-outgoing")
+    public Notice messageOutgoing =
+            Notice.chat("<dark_gray>[<gray>ja <dark_gray>-> <white>{RECEIVER}<dark_gray>] <gray>{MESSAGE}");
+
+    @CustomKey("message-incoming")
+    public Notice messageIncoming =
+            Notice.chat("<dark_gray>[<white>{SENDER} <dark_gray>-> <gray>ja<dark_gray>] <gray>{MESSAGE}");
+
+    @Comment("Placeholder: {PLAYER}")
+    @CustomKey("message-receiver-disabled")
+    public Notice messageReceiverDisabled =
+            Notice.chat("<red>Błąd> <gray>Gracz <white>{PLAYER}</white> ma wyłączone wiadomości prywatne.");
+
+    @CustomKey("message-to-self")
+    public Notice messageToSelf = Notice.chat("<red>Błąd> <gray>Nie napiszesz wiadomości do samego siebie.");
+
+    @CustomKey("reply-no-target")
+    public Notice replyNoTarget = Notice.chat("<red>Błąd> <gray>Nie masz komu odpowiedzieć.");
+
+    @CustomKey("reply-target-offline")
+    public Notice replyTargetOffline = Notice.chat("<red>Błąd> <gray>Ten gracz jest już offline.");
+
+    @CustomKey("messages-enabled")
+    public Notice messagesEnabled = Notice.chat("<green>Sieć> <gray>Wiadomości prywatne <white>włączone</white>.");
+
+    @CustomKey("messages-disabled")
+    public Notice messagesDisabled = Notice.chat("<green>Sieć> <gray>Wiadomości prywatne <white>wyłączone</white>.");
+
+    @Comment("")
+    @Comment("SocialSpy. Placeholdery: {SENDER}, {RECEIVER}, {MESSAGE}")
+    @CustomKey("social-spy-format")
+    public Notice socialSpyFormat =
+            Notice.chat("<dark_gray>[SS] <white>{SENDER} <dark_gray>-> <white>{RECEIVER}<dark_gray>: <gray>{MESSAGE}");
+
+    @CustomKey("social-spy-enabled")
+    public Notice socialSpyEnabled = Notice.chat("<green>Sieć> <gray>SocialSpy <white>włączony</white>.");
+
+    @CustomKey("social-spy-disabled")
+    public Notice socialSpyDisabled = Notice.chat("<green>Sieć> <gray>SocialSpy <white>wyłączony</white>.");
+
+    @Comment("")
+    @Comment("Ignorowanie. Placeholdery: {PLAYER}, {PLAYERS}")
+    @CustomKey("ignore-added")
+    public Notice ignoreAdded = Notice.chat("<green>Sieć> <gray>Ignorujesz gracza <white>{PLAYER}</white>.");
+
+    @CustomKey("ignore-removed")
+    public Notice ignoreRemoved =
+            Notice.chat("<green>Sieć> <gray>Nie ignorujesz już gracza <white>{PLAYER}</white>.");
+
+    @CustomKey("ignore-self")
+    public Notice ignoreSelf = Notice.chat("<red>Błąd> <gray>Nie zignorujesz samego siebie.");
+
+    @CustomKey("ignore-list")
+    public Notice ignoreList = Notice.chat("<green>Sieć> <gray>Ignorujesz: <white>{PLAYERS}</white>");
+
+    @CustomKey("ignore-list-empty")
+    public Notice ignoreListEmpty = Notice.chat("<green>Sieć> <gray>Nikogo nie ignorujesz.");
+
+    @Comment("")
     @Comment("Placeholder: {SERVER}, {TIME} - odpowiedz na /testmessage")
     @CustomKey("messaging-pong")
     public Notice messagingPong =

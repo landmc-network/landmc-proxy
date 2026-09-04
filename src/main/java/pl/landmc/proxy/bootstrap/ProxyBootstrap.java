@@ -21,6 +21,7 @@ import pl.landmc.proxy.command.AdminChatCommand;
 import pl.landmc.proxy.command.HelpOpCommand;
 import pl.landmc.proxy.command.LobbyCommand;
 import pl.landmc.proxy.command.MaintenanceCommand;
+import pl.landmc.proxy.command.PrivateMessageCommands;
 import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
@@ -28,11 +29,14 @@ import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.listener.MaintenanceListener;
 import pl.landmc.proxy.listener.PlayerRoutingListener;
+import pl.landmc.proxy.listener.PlayerSessionListener;
 import pl.landmc.proxy.maintenance.MaintenanceService;
 import pl.landmc.proxy.messaging.PingMessage;
 import pl.landmc.proxy.messaging.PongMessage;
 import pl.landmc.proxy.messaging.ProxyMessaging;
 import pl.landmc.proxy.player.PlayerPresenceService;
+import pl.landmc.proxy.privatemessage.IgnoreStorage;
+import pl.landmc.proxy.privatemessage.PrivateMessageService;
 import pl.landmc.proxy.rank.RankProvider;
 import pl.landmc.proxy.routing.RoutingService;
 import pl.landmc.proxy.server.ServerRegistry;
@@ -68,6 +72,7 @@ public final class ProxyBootstrap {
     private VelocityPacketEvents packetEvents;
     private LiteCommands<CommandSource> commands;
     private PlayerPresenceService presence;
+    private PrivateMessageService privateMessages;
     private MessageBus bus;
 
     public ProxyBootstrap(
@@ -119,6 +124,9 @@ public final class ProxyBootstrap {
 
         RankProvider ranks = RankProvider.create(this.logger);
 
+        IgnoreStorage ignores = this.configs.load(this.dataDirectory, "ignores.yml", IgnoreStorage.class);
+        this.privateMessages = new PrivateMessageService(this.proxy, notices, ignores, this.configs);
+
         this.commands = VelocityCommands.builder(this.proxy, formatter, platformNotices, this.logger)
                 .commands(
                         new ServerCommand(servers, routing, notices),
@@ -127,9 +135,14 @@ public final class ProxyBootstrap {
                         new MaintenanceCommand(maintenance, notices),
                         new HelpOpCommand(notices),
                         new AdminChatCommand(notices, ranks),
+                        new PrivateMessageCommands.Message(this.privateMessages),
+                        new PrivateMessageCommands.Reply(this.privateMessages),
+                        new PrivateMessageCommands.Toggle(this.privateMessages, notices),
+                        new PrivateMessageCommands.SocialSpy(this.privateMessages, notices),
+                        new PrivateMessageCommands.Ignore(this.privateMessages, notices),
                         new TestMessageCommand(this.bus, this.config, notices))
                 .build();
-        this.logger.info("Registered 7 commands.");
+        this.logger.info("Registered 12 commands.");
 
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
@@ -137,6 +150,9 @@ public final class ProxyBootstrap {
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(),
+                new PlayerSessionListener(this.privateMessages));
 
         this.logger.info("Registered {} backend servers.", servers.count());
         if (!servers.exists(routing.fallbackName())) {
