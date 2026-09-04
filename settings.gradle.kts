@@ -15,9 +15,31 @@ dependencyResolutionManagement {
 
     repositories {
         // The platform is consumed as a published artifact, not as an included build: every
-        // LandMC project is its own repository. mavenLocal covers development until the
-        // platform is published to GitHub Packages.
+        // LandMC project is its own repository.
+        //
+        // mavenLocal first, so a platform built locally with publishToMavenLocal wins over the
+        // published snapshot while both are being worked on. CI has no local cache, so there
+        // it resolves from GitHub Packages.
         mavenLocal()
+
+        // GitHub Packages requires authentication even for a public package, so a checkout
+        // without credentials cannot resolve the platform at all. gpr.user/gpr.token come from
+        // ~/.gradle/gradle.properties on a developer machine and from the workflow in CI; the
+        // repository is only declared when they exist, so `mavenLocal` development still works
+        // with no GitHub configuration at all.
+        val githubUser: String? = providers.gradleProperty("gpr.user").orNull
+        val githubToken: String? = providers.gradleProperty("gpr.token").orNull
+        if (githubUser != null && githubToken != null) {
+            maven("https://maven.pkg.github.com/landmc-network/landmc-platform") {
+                name = "GitHubPackages"
+                credentials {
+                    username = githubUser
+                    password = githubToken
+                }
+                // Nothing else lives here, and every miss is a round trip with a login.
+                content { includeGroup("pl.landmc") }
+            }
+        }
 
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/") {
