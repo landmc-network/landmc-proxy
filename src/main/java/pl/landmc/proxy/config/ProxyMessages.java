@@ -213,6 +213,63 @@ public class ProxyMessages extends OkaeriConfig {
             Notice.chat("<red>Błąd> <gray>Komunikacja sieciowa jest wyłączona w konfiguracji.");
 
     @Comment("")
+    @Comment("Ogloszenie na cala siec. Placeholder: {MESSAGE}")
+    @Comment("Ramka jest tutaj, zeby ogloszenie bylo rozpoznawalne, a nadawca nie mogl")
+    @Comment("podszyc sie pod komunikat systemowy sama trescia.")
+    @CustomKey("broadcast")
+    public Notice broadcast = Notice.chat(
+            "<dark_gray><strikethrough>                                        "
+                    + "<newline><green><bold>OGŁOSZENIE</bold> <gray>{MESSAGE}"
+                    + "<newline><dark_gray><strikethrough>                                        ");
+
+    @Comment("")
+    @Comment("Vouchery. Placeholdery: {CODE}, {COUNT}, {TYPE}, {TYPES}, {REWARD}, {PLAYER}, {SECONDS}, {MAXIMUM}")
+    @CustomKey("voucher-redeemed")
+    public Notice voucherRedeemed =
+            Notice.chat("<green><bold>VOUCHER</bold> <gray>Odebrano: <white>{REWARD}</white>.");
+
+    @CustomKey("voucher-unknown")
+    public Notice voucherUnknown = Notice.chat("<red>Błąd> <gray>Taki kod nie istnieje.");
+
+    @CustomKey("voucher-already-used")
+    public Notice voucherAlreadyUsed = Notice.chat("<red>Błąd> <gray>Ten kod został już wykorzystany.");
+
+    @CustomKey("voucher-cooldown")
+    public Notice voucherCooldown =
+            Notice.chat("<red>Błąd> <gray>Odczekaj <white>{SECONDS}</white> s przed kolejną próbą.");
+
+    @CustomKey("voucher-failed")
+    public Notice voucherFailed =
+            Notice.chat("<red>Błąd> <gray>Nie udało się odebrać kodu. Sprawdź konsolę.");
+
+    @CustomKey("voucher-waiting")
+    public Notice voucherWaiting = Notice.chat(
+            "<green><bold>VOUCHER</bold> <gray>Czeka na Ciebie <white>{COUNT}</white> kod(ów)."
+                    + "<newline><gray>Odbierz: <white>/voucher <kod>");
+
+    @CustomKey("voucher-none-waiting")
+    public Notice voucherNoneWaiting =
+            Notice.chat("<green><bold>VOUCHER</bold> <gray>Nie masz żadnych kodów do odebrania.");
+
+    @Comment("Potwierdzenia dla administracji.")
+    @CustomKey("voucher-issued")
+    public Notice voucherIssued = Notice.chat(
+            "<green><bold>VOUCHER</bold> <gray>Wygenerowano <white>{COUNT}</white> kod(ów)"
+                    + " typu <white>{TYPE}</white> dla <white>{PLAYER}</white>:");
+
+    @CustomKey("voucher-code")
+    public Notice voucherCode = Notice.chat("<dark_gray>  - <white>{CODE}");
+
+    @CustomKey("voucher-unknown-type")
+    public Notice voucherUnknownType = Notice.chat(
+            "<red>Błąd> <gray>Nie ma typu <white>{TYPE}</white>."
+                    + "<newline><gray>Dostępne: <white>{TYPES}");
+
+    @CustomKey("voucher-invalid-count")
+    public Notice voucherInvalidCount =
+            Notice.chat("<red>Błąd> <gray>Liczba kodów musi być z zakresu 1-<white>{MAXIMUM}</white>.");
+
+    @Comment("")
     @Comment("Lista znajomych. Placeholdery: {PLAYER}, {PLAYERS}, {COUNT}, {ONLINE}, {OFFLINE}, {LIMIT}")
     @CustomKey("friend-request-sent")
     public Notice friendRequestSent =

@@ -3,6 +3,9 @@ package pl.landmc.proxy.config;
 import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import eu.okaeri.configs.annotation.CustomKey;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import java.util.ArrayList;
 import java.util.List;
 import pl.landmc.platform.database.DatabaseConfig;
 import pl.landmc.platform.messaging.redis.RedisConfig;
@@ -38,7 +41,11 @@ public class ProxyConfig extends OkaeriConfig {
     public FriendsSection friends = new FriendsSection();
 
     @Comment("")
-    @Comment("Baza uzywana przez liste znajomych. Sekcja pochodzi z landmc-platform.")
+    @Comment("Vouchery - kody wymieniane na nagrody. Uzywaja tej samej bazy co znajomi.")
+    public VouchersSection vouchers = new VouchersSection();
+
+    @Comment("")
+    @Comment("Baza uzywana przez liste znajomych i vouchery. Sekcja pochodzi z landmc-platform.")
     public DatabaseConfig database = new DatabaseConfig();
 
     @Comment("")
@@ -197,6 +204,48 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Samo /friend bez argumentow prosi backend o otwarcie menu.")
         @CustomKey("gui-enabled")
         public boolean guiEnabled = true;
+    }
+
+    public static class VouchersSection extends OkaeriConfig {
+
+        @Comment("Komendy /voucher i /generujvoucher.")
+        public boolean enabled = false;
+
+        @Comment("")
+        @Comment("Odstep miedzy probami wpisania kodu. Bez niego komenda jest wyrocznia:")
+        @Comment("kody mozna zgadywac tak szybko, jak pozwoli lacze.")
+        @CustomKey("cooldown-seconds")
+        public int cooldownSeconds = 30;
+
+        @Comment("")
+        @Comment("Rodzaje voucherow. Nazwa jest tym, co podaje sie w /generujvoucher,")
+        @Comment("a 'commands' to komendy wykonywane z konsoli proxy po odebraniu.")
+        @Comment("W komendach dziala {PLAYER}. Dodanie nagrody to zmiana tego pliku,")
+        @Comment("a nie nowa wersja pluginu.")
+        public Map<String, VoucherReward> types = new LinkedHashMap<>(Map.of(
+                "vip7", new VoucherReward(
+                        "Ranga VIP na 7 dni",
+                        List.of("lp user {PLAYER} parent addtemp vip 7d accumulate")),
+                "vip30", new VoucherReward(
+                        "Ranga VIP na 30 dni",
+                        List.of("lp user {PLAYER} parent addtemp vip 30d accumulate"))));
+    }
+
+    public static class VoucherReward extends OkaeriConfig {
+
+        @Comment("Nazwa pokazywana graczowi po odebraniu.")
+        public String name = "";
+
+        @Comment("Komendy wykonywane z konsoli proxy. Placeholder: {PLAYER}")
+        public List<String> commands = new ArrayList<>();
+
+        public VoucherReward() {
+        }
+
+        public VoucherReward(String name, List<String> commands) {
+            this.name = name;
+            this.commands = new ArrayList<>(commands);
+        }
     }
 
     public static class HelpProgressSection extends OkaeriConfig {

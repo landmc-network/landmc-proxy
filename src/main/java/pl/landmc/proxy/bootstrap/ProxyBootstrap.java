@@ -55,7 +55,10 @@ import pl.landmc.proxy.friend.FriendGuiProtocol;
 import pl.landmc.proxy.friend.FriendRepository;
 import pl.landmc.proxy.friend.FriendService;
 import pl.landmc.proxy.rank.RankProvider;
+import pl.landmc.proxy.voucher.VoucherService;
+import pl.landmc.proxy.command.BroadcastCommand;
 import pl.landmc.proxy.command.FriendCommand;
+import pl.landmc.proxy.command.VoucherCommands;
 import pl.landmc.proxy.command.RankCommand;
 import pl.landmc.proxy.command.SkinCommand;
 import pl.landmc.proxy.resourcepack.ManifestSource;
@@ -101,9 +104,10 @@ public final class ProxyBootstrap {
     private SkinService skins;
     private DatabaseService database;
     private FriendService friends;
+    private VoucherService vouchers;
 
     /** Commands that are always present; the optional ones are counted alongside them. */
-    private static final int CORE_COMMAND_COUNT = 12;
+    private static final int CORE_COMMAND_COUNT = 13;
     private GuiPacketInterceptor guiInterceptor = GuiPacketInterceptor.DISABLED;
     private ResourcePackService resourcePack;
     private MessageBus bus;
@@ -152,7 +156,7 @@ public final class ProxyBootstrap {
 
         // The database is registered before the bus so it is closed after it: a handler still
         // draining a Redis message must not find the connection pool already shut.
-        if (this.config.friends.enabled) {
+        if (this.config.friends.enabled || this.config.vouchers.enabled) {
             this.database = new DatabaseService(
                     "landmc-proxy", this.config.database, this.dataDirectory, this.logger);
             this.lifecycle.register(this.database);
@@ -168,6 +172,7 @@ public final class ProxyBootstrap {
 
         VanishProvider vanish = VanishProvider.create(this.proxy, this.config, this.logger);
         this.startFriends(vanish);
+        this.startVouchers();
 
         IgnoreStorage ignores = this.configs.load(this.dataDirectory, "ignores.yml", IgnoreStorage.class);
         this.privateMessages = new PrivateMessageService(
@@ -191,6 +196,7 @@ public final class ProxyBootstrap {
                         new PrivateMessageCommands.Toggle(this.privateMessages, notices),
                         new PrivateMessageCommands.SocialSpy(this.privateMessages, notices),
                         new PrivateMessageCommands.Ignore(this.privateMessages, notices),
+                        new BroadcastCommand(notices, this.logger),
                         new TestMessageCommand(this.bus, this.config, notices))
                 .commands(optional)
                 .build();
@@ -204,7 +210,7 @@ public final class ProxyBootstrap {
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
-                new PlayerSessionListener(this.privateMessages, this.skins, this.friends));
+                new PlayerSessionListener(this.privateMessages, this.skins, this.friends, this.vouchers));
 
         this.startCooldown(notices);
         this.startResourcePack(formatter);
@@ -356,7 +362,7 @@ public final class ProxyBootstrap {
     private Object[] optionalCommands(
             VelocityNoticeService<ProxyMessages> notices, RankProvider ranks) {
 
-        java.util.List<Object> optional = new java.util.ArrayList<>(3);
+        java.util.List<Object> optional = new java.util.ArrayList<>(5);
 
         if (ranks.isAvailable()) {
             optional.add(new RankCommand(this.proxy, ranks, notices, this.logger));
@@ -364,6 +370,11 @@ public final class ProxyBootstrap {
 
         if (this.friends != null) {
             optional.add(new FriendCommand(this.friends, notices, this.config, this.logger));
+        }
+
+        if (this.vouchers != null) {
+            optional.add(new VoucherCommands.Redeem(this.vouchers, this.proxy, notices, this.logger));
+            optional.add(new VoucherCommands.Generate(this.vouchers, notices, this.config, this.logger));
         }
 
         if (this.config.skin.enabled && SkinService.isAvailable(this.logger)) {
@@ -406,6 +417,27 @@ public final class ProxyBootstrap {
                 this.config.database.type,
                 this.config.friends.maxFriends,
                 this.config.friends.requestExpiryDays);
+    }
+
+    /**
+     * Brings vouchers up on the database opened with the other platform modules.
+     *
+     * <p>Shares that database with the friends list rather than opening a second pool: two
+     * features on one proxy, one connection pool.
+     */
+    private void startVouchers() {
+        if (!this.config.vouchers.enabled) {
+            return;
+        }
+        if (this.database == null) {
+            this.logger.error("Vouchers need a database but none was opened; check config.yml.");
+            return;
+        }
+
+        this.vouchers = new VoucherService(this.database, this.config);
+        this.vouchers.createTables();
+
+        this.logger.info("Vouchers ready ({} reward type(s)).", this.config.vouchers.types.size());
     }
 
     /** Registers the login tracer, but only while it is switched on. */
