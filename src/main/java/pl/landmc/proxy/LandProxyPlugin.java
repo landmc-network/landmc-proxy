@@ -29,9 +29,15 @@ import pl.landmc.proxy.bootstrap.ProxyBootstrap;
         description = "Warstwa wejściowa sieci LandMC: routing, tryb serwisowy i komunikacja z instancjami Paper.",
         url = "https://github.com/landmc-network/landmc-proxy",
         authors = {"Crispi"},
-        // Optional: PacketEvents is initialised for features that will need it, and a proxy
-        // without it must still start. Declared so Velocity loads it first when present.
-        dependencies = @Dependency(id = "packetevents", optional = true))
+        // Every integration is optional, and the proxy starts without any of them. They are
+        // declared so that Velocity initialises them before this plugin: without the
+        // declaration a plugin that registers its API during startup may not have done so by
+        // the time the bootstrap looks, and the feature is silently left switched off.
+        dependencies = {
+            @Dependency(id = "packetevents", optional = true),
+            @Dependency(id = "luckperms", optional = true),
+            @Dependency(id = "skinsrestorer", optional = true)
+        })
 public final class LandProxyPlugin {
 
     private final ProxyServer proxy;

@@ -4,7 +4,9 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.rollczi.litecommands.LiteCommands;
+import dev.rollczi.litecommands.argument.resolver.standard.DurationArgumentResolver;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import pl.landmc.proxy.cooldown.GlobalCooldownService;
 import pl.landmc.proxy.cooldown.GuiPacketInterceptor;
 import pl.landmc.proxy.cooldown.PacketEventsGuiInterceptor;
 import pl.landmc.proxy.listener.CooldownListener;
+import pl.landmc.proxy.listener.JoinDebugListener;
 import pl.landmc.proxy.listener.MaintenanceListener;
 import pl.landmc.proxy.listener.PlayerRoutingListener;
 import pl.landmc.proxy.listener.PlayerSessionListener;
@@ -45,10 +48,13 @@ import pl.landmc.proxy.player.PlayerPresenceService;
 import pl.landmc.proxy.privatemessage.IgnoreStorage;
 import pl.landmc.proxy.privatemessage.PrivateMessageService;
 import pl.landmc.proxy.rank.RankProvider;
+import pl.landmc.proxy.command.RankCommand;
+import pl.landmc.proxy.command.SkinCommand;
 import pl.landmc.proxy.resourcepack.ManifestSource;
 import pl.landmc.proxy.resourcepack.ResourcePackRebuiltMessage;
 import pl.landmc.proxy.resourcepack.ResourcePackService;
 import pl.landmc.proxy.routing.RoutingService;
+import pl.landmc.proxy.skin.SkinService;
 import pl.landmc.proxy.server.ServerRegistry;
 
 /**
@@ -83,6 +89,10 @@ public final class ProxyBootstrap {
     private LiteCommands<CommandSource> commands;
     private PlayerPresenceService presence;
     private PrivateMessageService privateMessages;
+    private SkinService skins;
+
+    /** Commands that are always present; the optional ones are counted alongside them. */
+    private static final int CORE_COMMAND_COUNT = 12;
     private GuiPacketInterceptor guiInterceptor = GuiPacketInterceptor.DISABLED;
     private ResourcePackService resourcePack;
     private MessageBus bus;
@@ -139,7 +149,12 @@ public final class ProxyBootstrap {
         IgnoreStorage ignores = this.configs.load(this.dataDirectory, "ignores.yml", IgnoreStorage.class);
         this.privateMessages = new PrivateMessageService(this.proxy, notices, ignores, this.configs);
 
+        Object[] optional = this.optionalCommands(notices, ranks);
+
+        // LiteCommands ships a Duration resolver but does not register it; /setrank's optional
+        // time argument is the reason this proxy wants one.
         this.commands = VelocityCommands.builder(this.proxy, formatter, platformNotices, this.logger)
+                .argument(Duration.class, new DurationArgumentResolver<>())
                 .commands(
                         new ServerCommand(servers, routing, notices),
                         new LobbyCommand(routing, notices),
@@ -153,8 +168,9 @@ public final class ProxyBootstrap {
                         new PrivateMessageCommands.SocialSpy(this.privateMessages, notices),
                         new PrivateMessageCommands.Ignore(this.privateMessages, notices),
                         new TestMessageCommand(this.bus, this.config, notices))
+                .commands(optional)
                 .build();
-        this.logger.info("Registered 12 commands.");
+        this.logger.info("Registered {} commands.", CORE_COMMAND_COUNT + optional.length);
 
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
@@ -164,10 +180,11 @@ public final class ProxyBootstrap {
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
-                new PlayerSessionListener(this.privateMessages));
+                new PlayerSessionListener(this.privateMessages, this.skins));
 
         this.startCooldown(notices);
         this.startResourcePack(formatter);
+        this.startJoinDebug();
 
         this.logger.info("Registered {} backend servers.", servers.count());
         if (!servers.exists(routing.fallbackName())) {
@@ -283,6 +300,45 @@ public final class ProxyBootstrap {
                 this.config.cooldown.enabled ? "enabled" : "disabled",
                 this.config.cooldown.commandCooldownMillis,
                 this.config.cooldown.guiCooldownMillis);
+    }
+
+    /**
+     * The commands whose integrations may be absent.
+     *
+     * <p>Registering a command that answers "this feature is unavailable" trains players to
+     * ignore it. If LuckPerms or SkinsRestorer is not installed, the command does not exist and
+     * the proxy says so once, in the log.
+     */
+    private Object[] optionalCommands(
+            VelocityNoticeService<ProxyMessages> notices, RankProvider ranks) {
+
+        java.util.List<Object> optional = new java.util.ArrayList<>(2);
+
+        if (ranks.isAvailable()) {
+            optional.add(new RankCommand(this.proxy, ranks, notices, this.logger));
+        }
+
+        if (this.config.skin.enabled && SkinService.isAvailable(this.logger)) {
+            this.skins = new SkinService(
+                    this.proxy, this.container.getInstance().orElseThrow(), this.config, this.logger);
+            optional.add(new SkinCommand(this.skins, notices));
+        }
+
+        return optional.toArray();
+    }
+
+    /** Registers the login tracer, but only while it is switched on. */
+    private void startJoinDebug() {
+        if (!this.config.joinDebug.enabled) {
+            return;
+        }
+
+        this.proxy.getEventManager().register(
+                this.container.getInstance().orElseThrow(),
+                new JoinDebugListener(this.logger, this.config));
+        this.logger.warn(
+                "Join debugging is ON - every login writes a dozen lines to the console."
+                        + " Switch join-debug off in config.yml once the problem is found.");
     }
 
     /**

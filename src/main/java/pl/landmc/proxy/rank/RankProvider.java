@@ -1,80 +1,117 @@
 package pl.landmc.proxy.rank;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import java.time.Duration;
 import java.util.Objects;
-import java.util.Optional;
-import net.luckperms.api.LuckPerms;
-import net.luckperms.api.LuckPermsProvider;
-import net.luckperms.api.cacheddata.CachedMetaData;
+import java.util.concurrent.CompletableFuture;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
- * Reads a player's rank prefix from LuckPerms.
+ * Everything the proxy asks about ranks.
  *
- * <p>The one place in the proxy that touches LuckPerms. Everything else asks this, so a feature
- * that wants a prefix does not have to care whether LuckPerms is installed - and the proxy
- * starts on a server without it, which the original could not: it called
+ * <p>The seam that keeps LuckPerms optional, in the same shape as the one around PacketEvents.
+ * No class that mentions a LuckPerms type is named here: {@link #UNAVAILABLE} answers when
+ * LuckPerms is absent, and {@link LuckPermsRankProvider} is only loaded once it is known to be
+ * present. That distinction is not academic - a plugin class is verified when it is first
+ * loaded, and verifying one that refers to a missing library throws {@code NoClassDefFoundError}
+ * before any {@code try} block inside its methods can catch it, which is exactly how the proxy
+ * failed to start on a server without LuckPerms.
+ *
+ * <p>The original went further wrong in the same direction: it called
  * {@code LuckPermsProvider.get()} in a command constructor, so the whole plugin failed to load.
- *
- * <p>Reads come from LuckPerms' own cache, so this is memory access rather than I/O and is safe
- * to call while handling a chat message.
  */
-public final class RankProvider {
+public interface RankProvider {
 
-    private final LuckPerms luckPerms;
+    /** Answers as though every player were unranked; installed when LuckPerms is absent. */
+    RankProvider UNAVAILABLE = new RankProvider() {
 
-    private RankProvider(LuckPerms luckPerms) {
-        this.luckPerms = luckPerms;
-    }
+        @Override
+        public boolean isAvailable() {
+            return false;
+        }
+
+        @Override
+        public String prefixOf(Player player) {
+            return "";
+        }
+
+        @Override
+        public String groupOf(Player player) {
+            return "";
+        }
+
+        @Override
+        public CompletableFuture<RankAssignment> assign(
+                ProxyServer proxy, String targetName, String groupName, @Nullable Duration duration) {
+
+            return CompletableFuture.completedFuture(RankAssignment.unavailable());
+        }
+    };
 
     /**
-     * Binds to LuckPerms when it is installed, otherwise returns a provider that yields no
-     * prefixes. Never throws: a missing optional integration must not stop the proxy.
+     * Binds to LuckPerms when it is installed, otherwise returns {@link #UNAVAILABLE}.
+     *
+     * <p>Never throws: a missing optional integration must not stop the proxy.
      */
-    public static RankProvider create(Logger logger) {
+    static RankProvider create(Logger logger) {
         Objects.requireNonNull(logger, "logger");
 
         try {
-            RankProvider provider = new RankProvider(LuckPermsProvider.get());
-            logger.info("LuckPerms found; rank prefixes are available.");
+            RankProvider provider = LuckPermsRankProvider.bind();
+            logger.info("LuckPerms found; rank prefixes and /setrank are available.");
             return provider;
         }
         catch (IllegalStateException | NoClassDefFoundError exception) {
-            logger.info("LuckPerms is not installed; rank prefixes stay empty.");
-            return new RankProvider(null);
+            logger.info("LuckPerms is not installed; rank prefixes stay empty and /setrank is not registered.");
+            return UNAVAILABLE;
         }
     }
 
-    public boolean isAvailable() {
-        return this.luckPerms != null;
-    }
+    boolean isAvailable();
 
     /** The player's rank prefix, or an empty string when there is none. */
-    public String prefixOf(Player player) {
-        Objects.requireNonNull(player, "player");
-
-        return this.metaOf(player)
-                .map(CachedMetaData::getPrefix)
-                .filter(prefix -> !prefix.isBlank())
-                .orElse("");
-    }
+    String prefixOf(Player player);
 
     /** The player's primary group, or an empty string when LuckPerms is absent. */
-    public String groupOf(Player player) {
-        Objects.requireNonNull(player, "player");
+    String groupOf(Player player);
 
-        return this.metaOf(player)
-                .map(CachedMetaData::getPrimaryGroup)
-                .filter(group -> !group.isBlank())
-                .orElse("");
-    }
+    /**
+     * Puts a player in a group, replacing whatever groups they inherited before.
+     *
+     * @param duration how long the group lasts, or null for permanently
+     * @return what happened; only a genuine storage failure completes exceptionally, an
+     *     ordinary "no such group" is an outcome
+     */
+    CompletableFuture<RankAssignment> assign(
+            ProxyServer proxy, String targetName, String groupName, @Nullable Duration duration);
 
-    private Optional<CachedMetaData> metaOf(Player player) {
-        if (this.luckPerms == null) {
-            return Optional.empty();
+    /** How {@link #assign} ended, and the names needed to say so to the sender. */
+    record RankAssignment(Outcome outcome, String group, String player) {
+
+        public enum Outcome {
+            /** LuckPerms is not installed, so ranks cannot be changed from here. */
+            UNAVAILABLE,
+            NO_SUCH_GROUP,
+            NO_SUCH_PLAYER,
+            ASSIGNED
         }
 
-        return Optional.ofNullable(this.luckPerms.getUserManager().getUser(player.getUniqueId()))
-                .map(user -> user.getCachedData().getMetaData());
+        static RankAssignment unavailable() {
+            return new RankAssignment(Outcome.UNAVAILABLE, "", "");
+        }
+
+        static RankAssignment groupNotFound() {
+            return new RankAssignment(Outcome.NO_SUCH_GROUP, "", "");
+        }
+
+        static RankAssignment playerNotFound() {
+            return new RankAssignment(Outcome.NO_SUCH_PLAYER, "", "");
+        }
+
+        static RankAssignment assigned(String group, String player) {
+            return new RankAssignment(Outcome.ASSIGNED, group, player);
+        }
     }
 }

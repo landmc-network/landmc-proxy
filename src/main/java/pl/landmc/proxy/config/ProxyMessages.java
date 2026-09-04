@@ -205,4 +205,56 @@ public class ProxyMessages extends OkaeriConfig {
     @CustomKey("messaging-disabled")
     public Notice messagingDisabled =
             Notice.chat("<red>Błąd> <gray>Komunikacja sieciowa jest wyłączona w konfiguracji.");
+
+    @Comment("")
+    @Comment("Nadawanie rang. Placeholdery: {RANK}, {PLAYER}, {TIME}")
+    @CustomKey("rank-assigned")
+    public Notice rankAssigned =
+            Notice.chat("<green>Sieć> <gray>Gracz <white>{PLAYER}</white> ma teraz rangę <white>{RANK}</white>.");
+
+    @CustomKey("rank-assigned-temporarily")
+    public Notice rankAssignedTemporarily = Notice.chat(
+            "<green>Sieć> <gray>Gracz <white>{PLAYER}</white> ma rangę <white>{RANK}</white>"
+                    + " przez <white>{TIME}</white>.");
+
+    @CustomKey("rank-group-not-found")
+    public Notice rankGroupNotFound = Notice.chat("<red>Błąd> <gray>Taka ranga nie istnieje.");
+
+    @Comment("Placeholder: {PLAYER}")
+    @CustomKey("rank-player-not-found")
+    public Notice rankPlayerNotFound =
+            Notice.chat("<red>Błąd> <gray>Nie znaleziono gracza <white>{PLAYER}</white>.");
+
+    @Comment("Gdy LuckPerms zniknal juz po starcie proxy.")
+    @CustomKey("rank-unavailable")
+    public Notice rankUnavailable = Notice.chat("<red>Błąd> <gray>Zarządzanie rangami jest niedostępne.");
+
+    @CustomKey("rank-failed")
+    public Notice rankFailed = Notice.chat("<red>Błąd> <gray>Nie udało się zapisać rangi. Sprawdź konsolę.");
+
+    @Comment("")
+    @Comment("Komenda /skin. Placeholdery: {SKIN}, {SECONDS}")
+    @CustomKey("skin-loading")
+    public Notice skinLoading = Notice.chat("<green>Sieć> <gray>Pobieram skin gracza <white>{SKIN}</white>...");
+
+    @CustomKey("skin-applied")
+    public Notice skinApplied = Notice.chat("<green>Sieć> <gray>Ustawiono skin gracza <white>{SKIN}</white>.");
+
+    @CustomKey("skin-not-found")
+    public Notice skinNotFound =
+            Notice.chat("<red>Błąd> <gray>Nie ma konta premium o nicku <white>{SKIN}</white>.");
+
+    @CustomKey("skin-failed")
+    public Notice skinFailed = Notice.chat("<red>Błąd> <gray>Nie udało się pobrać skina. Spróbuj później.");
+
+    @CustomKey("skin-invalid-name")
+    public Notice skinInvalidName =
+            Notice.chat("<red>Błąd> <gray>Nick skina to od 3 do 16 znaków: litery, cyfry lub podkreślnik.");
+
+    @CustomKey("skin-cooldown")
+    public Notice skinCooldown =
+            Notice.chat("<red>Błąd> <gray>Poczekaj jeszcze <white>{SECONDS}</white> s przed kolejną zmianą.");
+
+    @CustomKey("skin-no-permission")
+    public Notice skinNoPermission = Notice.chat("<red>Błąd> <gray>Nie możesz zmieniać skina.");
 }

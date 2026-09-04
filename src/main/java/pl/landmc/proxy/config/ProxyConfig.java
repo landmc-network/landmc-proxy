@@ -30,6 +30,13 @@ public class ProxyConfig extends OkaeriConfig {
     @CustomKey("resource-pack")
     public ResourcePackSection resourcePack = new ResourcePackSection();
 
+    @Comment("")
+    @CustomKey("join-debug")
+    public JoinDebugSection joinDebug = new JoinDebugSection();
+
+    @Comment("")
+    public SkinSection skin = new SkinSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -135,6 +142,46 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Odrzucanie ofert paczki od backendow, zeby gracz nie pobieral jej dwa razy.")
         @CustomKey("block-backend-offers")
         public boolean blockBackendOffers = true;
+    }
+
+    public static class JoinDebugSection extends OkaeriConfig {
+
+        @Comment("Szczegolowy log logowania gracza - od PreLogin az do rozlaczenia.")
+        @Comment("Wlaczaj na czas diagnozy: kazde wejscie to kilkanascie linii w konsoli.")
+        public boolean enabled = false;
+
+        @Comment("")
+        @Comment("UUID gracza w logu.")
+        @CustomKey("include-uuid")
+        public boolean includeUuid = true;
+
+        @Comment("Adres IP gracza. To dane osobowe - wlaczaj tylko na czas diagnozy.")
+        @CustomKey("include-remote-address")
+        public boolean includeRemoteAddress = false;
+
+        @Comment("Powod wyrzucenia z serwera backendowego. Moze zawierac tresc bana.")
+        @CustomKey("include-kick-reason")
+        public boolean includeKickReason = true;
+    }
+
+    public static class SkinSection extends OkaeriConfig {
+
+        @Comment("Komenda /skin <nick> oparta o SkinsRestorer.")
+        @Comment("Bez zainstalowanego SkinsRestorera komenda po prostu sie nie rejestruje.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Uprawnienie do zmiany skina. Domyslnie to samo, ktorego uzywa SkinsRestorer.")
+        public String permission = "skinsrestorer.command";
+
+        @Comment("")
+        @Comment("Odstep miedzy zmianami skina - kazda to zapytanie do Mojanga.")
+        @CustomKey("cooldown-seconds")
+        public int successCooldownSeconds = 30;
+
+        @Comment("Krotszy odstep po nieudanej probie, zeby literowka nie blokowala na dlugo.")
+        @CustomKey("error-cooldown-seconds")
+        public int errorCooldownSeconds = 5;
     }
 
     public static class MessagingSection extends OkaeriConfig {
