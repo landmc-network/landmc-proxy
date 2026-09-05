@@ -269,6 +269,16 @@ public class ProxyConfig extends OkaeriConfig {
         public Map<String, String> servers = new LinkedHashMap<>(Map.of("lobby", "Lobby"));
 
         @Comment("")
+        @Comment("Podserwery - instancje lobby, miedzy ktorymi gracz moze sie przelaczac.")
+        @Comment("To co innego niz lista wyzej: tam sa serwery gry, tu kopie huba.")
+        @Comment("Dopoki jest jedno lobby, menu pokaze jedna pozycje i tak ma byc.")
+        @CustomKey("lobbies-enabled")
+        public boolean lobbiesEnabled = true;
+
+        @CustomKey("lobbies")
+        public Map<String, String> lobbies = new LinkedHashMap<>(Map.of("lobby", "Hub #1"));
+
+        @Comment("")
         @Comment("Ile milisekund czekac na polaczenie z serwerem, zanim menu oznaczy go jako")
         @Comment("niedostepny. Menu otwiera sie po tym czasie, wiec dlugi timeout to dlugie")
         @Comment("czekanie na komende, ktora gracz wlasnie wpisal.")

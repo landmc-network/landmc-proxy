@@ -30,6 +30,7 @@ import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.LiveCommand;
 import pl.landmc.proxy.command.ProfileCommand;
+import pl.landmc.proxy.command.LobbyMenuCommand;
 import pl.landmc.proxy.command.StatisticsCommand;
 import pl.landmc.proxy.command.ServerMenuCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
@@ -429,6 +430,9 @@ public final class ProxyBootstrap {
 
         optional.add(new ProfileCommand(
                 new ProfileMenuService(this.friends, ranks), this.menuBridge, notices, this.logger));
+        if (this.config.menus.lobbiesEnabled) {
+            optional.add(new LobbyMenuCommand(serverMenu, this.menuBridge, notices));
+        }
         optional.add(new StatisticsCommand(
                 new StatisticsMenuService(this.friends, ranks, () -> this.messages),
                 this.menuBridge, notices, this.logger));

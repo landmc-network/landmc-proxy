@@ -36,9 +36,18 @@ public final class ServerMenuService {
 
     /** The servers this menu offers, in configured order, skipping any that is not registered. */
     public Map<String, RegisteredServer> listed() {
+        return this.listed(this.config.menus.servers);
+    }
+
+    /** The lobbies, on the same terms. */
+    public Map<String, RegisteredServer> listedLobbies() {
+        return this.listed(this.config.menus.lobbies);
+    }
+
+    private Map<String, RegisteredServer> listed(Map<String, String> configured) {
         Map<String, RegisteredServer> listed = new LinkedHashMap<>();
 
-        for (Map.Entry<String, String> entry : this.config.menus.servers.entrySet()) {
+        for (Map.Entry<String, String> entry : configured.entrySet()) {
             this.proxy.getServer(entry.getKey())
                     .ifPresent(server -> listed.put(entry.getKey(), server));
         }
@@ -50,13 +59,33 @@ public final class ServerMenuService {
         return Optional.ofNullable(this.listed().get(serverId));
     }
 
+    /**
+     * A lobby the player may be sent to.
+     *
+     * <p>Separate from {@link #selectable}, because the two menus offer different lists and a
+     * click on one must not reach a server only the other offers.
+     */
+    public Optional<RegisteredServer> selectableLobby(String serverId) {
+        return Optional.ofNullable(this.listedLobbies().get(serverId));
+    }
+
     /** Builds the payload. No I/O: the health of each server was checked in the background. */
     public MenuPayload.Servers payload(Player player) {
-        Map<String, RegisteredServer> listed = this.listed();
+        String current = currentServerOf(player);
+        return new MenuPayload.Servers(
+                current, this.entries(current, this.listed(), this.config.menus.servers));
+    }
 
-        String current = player.getCurrentServer()
-                .map(connection -> connection.getServerInfo().getName())
-                .orElse("");
+    /** The same, for the lobbies. */
+    public MenuPayload.Lobbies lobbies(Player player) {
+        String current = currentServerOf(player);
+        return new MenuPayload.Lobbies(
+                current,
+                this.entries(current, this.listedLobbies(), this.config.menus.lobbies));
+    }
+
+    private List<MenuPayload.Servers.Server> entries(
+            String current, Map<String, RegisteredServer> listed, Map<String, String> names) {
 
         List<MenuPayload.Servers.Server> servers = new ArrayList<>(listed.size());
         for (Map.Entry<String, RegisteredServer> entry : listed.entrySet()) {
@@ -67,11 +96,16 @@ public final class ServerMenuService {
 
             servers.add(new MenuPayload.Servers.Server(
                     entry.getKey(),
-                    this.config.menus.servers.getOrDefault(entry.getKey(), entry.getKey()),
+                    names.getOrDefault(entry.getKey(), entry.getKey()),
                     entry.getValue().getPlayersConnected().size(),
                     reachable));
         }
+        return servers;
+    }
 
-        return new MenuPayload.Servers(current, servers);
+    private static String currentServerOf(Player player) {
+        return player.getCurrentServer()
+                .map(connection -> connection.getServerInfo().getName())
+                .orElse("");
     }
 }

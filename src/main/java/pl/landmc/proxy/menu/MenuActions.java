@@ -71,6 +71,7 @@ public final class MenuActions {
             bridge.handler(MenuKind.FRIENDS, this::onFriendsAction);
         }
         bridge.handler(MenuKind.SERVERS, this::onServersAction);
+        bridge.handler(MenuKind.LOBBIES, this::onLobbiesAction);
         bridge.handler(MenuKind.PROFILE, this::onProfileAction);
         bridge.handler(MenuKind.STATISTICS, this::onStatisticsAction);
     }
@@ -116,6 +117,32 @@ public final class MenuActions {
             case "friends" -> this.dispatch(player, "friend");
             default -> this.logger.debug("Unknown statistics action: {}", action.action());
         }
+    }
+
+    /**
+     * The lobby list: the hotbar asking for it, and a click on one of them.
+     *
+     * <p>Kept apart from the server list rather than sharing its handler, because the two menus
+     * offer different sets and a click on one must not reach a server only the other lists.
+     */
+    private void onLobbiesAction(Player player, MenuAction action) {
+        if ("open".equals(action.action())) {
+            this.dispatch(player, "podserwery");
+            return;
+        }
+
+        if (!"connect".equals(action.action())) {
+            this.logger.debug("Unknown lobbies menu action: {}", action.action());
+            return;
+        }
+
+        Optional<RegisteredServer> target = this.servers.selectableLobby(action.argument());
+        if (target.isEmpty()) {
+            this.notices.viewer(player, messages -> messages.menuServerUnavailable);
+            return;
+        }
+
+        this.routing.connect(player, target.get());
     }
 
     private void onServersAction(Player player, MenuAction action) {
