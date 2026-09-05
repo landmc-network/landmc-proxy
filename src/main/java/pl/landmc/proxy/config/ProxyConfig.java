@@ -362,8 +362,10 @@ public class ProxyConfig extends OkaeriConfig {
         public String maintenanceVersion = "Przerwa techniczna";
 
         @Comment("")
-        @Comment("Ikona obok nazwy - plik PNG 64x64 w katalogu tego pluginu.")
-        @Comment("Brak pliku to normalny przypadek i nic nie znaczy.")
+        @Comment("Ikona obok nazwy - plik PNG 64x64 w katalogu TEGO PLUGINU.")
+        @Comment("Brak pliku to normalny przypadek i zwykle wlasciwy: wtedy zostaje ikona,")
+        @Comment("ktora wysyla samo Velocity, czyli server-icon.png z katalogu proxy.")
+        @Comment("Ten wpis sluzy tylko do nadpisania jej czyms innym.")
         @CustomKey("icon-file")
         public String iconFile = "server-icon.png";
     }
