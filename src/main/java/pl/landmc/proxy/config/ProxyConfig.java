@@ -65,6 +65,9 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public MenusSection menus = new MenusSection();
 
+    @Comment("")
+    public LiveSection live = new LiveSection();
+
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -207,6 +210,48 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Samo /friend bez argumentow prosi backend o otwarcie menu.")
         @CustomKey("gui-enabled")
         public boolean guiEnabled = true;
+    }
+
+    /** Komenda /live - ogloszenie transmisji na cala siec. */
+    public static class LiveSection extends OkaeriConfig {
+
+        @Comment("Komenda /live. Wylaczona nie rejestruje sie wcale.")
+        public boolean enabled = false;
+
+        @Comment("")
+        @Comment("Ile minut streamer musi odczekac miedzy ogloszeniami.")
+        @Comment("Sprawdzenie w API mowi, KTO moze ogloszic - to mowi, JAK CZESTO. Bez tego")
+        @Comment("nadajacy gracz moze powtarzac ogloszenie na cala siec bez konca.")
+        @CustomKey("cooldown-minutes")
+        public int cooldownMinutes = 30;
+
+        @Comment("")
+        @Comment("Tresc ogloszenia. Placeholdery: {PLAYER}, {PREFIX}, {URL}, {PLATFORM}")
+        @CustomKey("broadcast-lines")
+        public List<String> broadcastLines = new ArrayList<>(List.of(
+                "",
+                "<gradient:#aa0e00:#ff0800><bold>LIVE</bold></gradient> <gray>{PREFIX}<white>{PLAYER}</white> prowadzi transmisję na <white>{PLATFORM}</white>!",
+                "<click:open_url:'{URL}'><hover:show_text:'<green>Otwórz transmisję'><green><bold>[DOŁĄCZ]</bold></green></hover></click>",
+                ""));
+
+        @Comment("")
+        public PlatformCredentials twitch = new PlatformCredentials();
+
+        @Comment("")
+        public PlatformCredentials kick = new PlatformCredentials();
+    }
+
+    /**
+     * Dane aplikacji OAuth platformy. Moga byc wpisane wprost albo jako ${ZMIENNA},
+     * tak samo jak dane bazy - wtedy nie ma ich w pliku, ktory ktos wysyla na Discordzie.
+     */
+    public static class PlatformCredentials extends OkaeriConfig {
+
+        @CustomKey("client-id")
+        public String clientId = "";
+
+        @CustomKey("client-secret")
+        public String clientSecret = "";
     }
 
     /** Menu rysowane na backendzie, wypelniane danymi stad. */

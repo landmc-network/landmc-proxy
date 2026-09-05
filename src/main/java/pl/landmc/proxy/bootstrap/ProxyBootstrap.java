@@ -28,6 +28,7 @@ import pl.landmc.proxy.command.MaintenanceCommand;
 import pl.landmc.proxy.command.PrivateMessageCommands;
 import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
+import pl.landmc.proxy.command.LiveCommand;
 import pl.landmc.proxy.command.ServerMenuCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
 import pl.landmc.proxy.config.ProxyConfig;
@@ -58,6 +59,10 @@ import pl.landmc.proxy.menu.FriendMenuService;
 import pl.landmc.proxy.menu.MenuActions;
 import pl.landmc.proxy.menu.MenuBridge;
 import pl.landmc.proxy.menu.ServerHealth;
+import pl.landmc.proxy.live.KickStatusClient;
+import pl.landmc.proxy.live.LiveRepository;
+import pl.landmc.proxy.live.LiveService;
+import pl.landmc.proxy.live.TwitchStatusClient;
 import pl.landmc.proxy.menu.ServerMenuService;
 import pl.landmc.proxy.rank.RankProvider;
 import pl.landmc.proxy.voucher.VoucherService;
@@ -112,6 +117,7 @@ public final class ProxyBootstrap {
     private MenuBridge menuBridge;
     private ServerHealth serverHealth;
     private VoucherService vouchers;
+    private LiveService live;
 
     /** Commands that are always present; the optional ones are counted alongside them. */
     private static final int CORE_COMMAND_COUNT = 13;
@@ -163,7 +169,7 @@ public final class ProxyBootstrap {
 
         // The database is registered before the bus so it is closed after it: a handler still
         // draining a Redis message must not find the connection pool already shut.
-        if (this.config.friends.enabled || this.config.vouchers.enabled) {
+        if (this.config.friends.enabled || this.config.vouchers.enabled || this.config.live.enabled) {
             this.database = new DatabaseService(
                     "landmc-proxy", this.config.database, this.dataDirectory, this.logger);
             this.lifecycle.register(this.database);
@@ -180,6 +186,7 @@ public final class ProxyBootstrap {
         VanishProvider vanish = VanishProvider.create(this.proxy, this.config, this.logger);
         this.startFriends(vanish);
         this.startVouchers();
+        this.startLive();
 
         IgnoreStorage ignores = this.configs.load(this.dataDirectory, "ignores.yml", IgnoreStorage.class);
         this.privateMessages = new PrivateMessageService(
@@ -234,7 +241,8 @@ public final class ProxyBootstrap {
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
-                new PlayerSessionListener(this.privateMessages, this.skins, this.friends, this.vouchers));
+                new PlayerSessionListener(
+                        this.privateMessages, this.skins, this.friends, this.vouchers, this.live));
 
         this.startCooldown(notices);
         this.startResourcePack(formatter);
@@ -415,6 +423,12 @@ public final class ProxyBootstrap {
             optional.add(new ServerMenuCommand(serverMenu, this.menuBridge, notices));
         }
 
+        if (this.live != null) {
+            optional.add(new LiveCommand(
+                    this.live, this.proxy, notices, ComponentFormatter.standard(),
+                    this.config, ranks, this.logger));
+        }
+
         if (this.vouchers != null) {
             optional.add(new VoucherCommands.Redeem(this.vouchers, this.proxy, notices, this.logger));
             optional.add(new VoucherCommands.Generate(this.vouchers, notices, this.config, this.logger));
@@ -464,6 +478,50 @@ public final class ProxyBootstrap {
      * <p>Shares that database with the friends list rather than opening a second pool: two
      * features on one proxy, one connection pool.
      */
+    /**
+     * Brings /live up.
+     *
+     * <p>The HTTP client is built here and shared by both platform clients: one connection pool
+     * and one set of threads for a feature that makes a request when somebody types a command,
+     * rather than two of each sitting idle.
+     */
+    private void startLive() {
+        if (!this.config.live.enabled) {
+            return;
+        }
+        if (this.database == null) {
+            this.logger.error("Live needs a database but none was opened; check config.yml.");
+            return;
+        }
+
+        java.net.http.HttpClient http = java.net.http.HttpClient.newBuilder()
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
+
+        TwitchStatusClient twitch = new TwitchStatusClient(http, this.config, this.logger);
+        KickStatusClient kick = new KickStatusClient(http, this.config, this.logger);
+
+        this.live = new LiveService(
+                new LiveRepository(this.database), this.config, java.util.List.of(twitch, kick));
+        this.live.createTables();
+
+        // Said once, at startup, rather than discovered by a streamer whose announcement was
+        // refused: a platform with no credentials cannot be checked, and a stream on it can
+        // never be announced.
+        if (!twitch.isConfigured()) {
+            this.logger.warn("Twitch has no client id/secret; /live cannot verify a Twitch stream.");
+        }
+        if (!kick.isConfigured()) {
+            this.logger.warn("Kick has no client id/secret; /live cannot verify a Kick stream.");
+        }
+
+        this.logger.info(
+                "Live ready (cooldown {} min, Twitch {}, Kick {}).",
+                this.config.live.cooldownMinutes,
+                twitch.isConfigured() ? "on" : "off",
+                kick.isConfigured() ? "on" : "off");
+    }
+
     private void startVouchers() {
         if (!this.config.vouchers.enabled) {
             return;

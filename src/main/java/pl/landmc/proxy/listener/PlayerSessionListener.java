@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.UUID;
 import org.jspecify.annotations.Nullable;
 import pl.landmc.proxy.friend.FriendService;
+import pl.landmc.proxy.live.LiveService;
 import pl.landmc.proxy.privatemessage.PrivateMessageService;
 import pl.landmc.proxy.skin.SkinService;
 import pl.landmc.proxy.voucher.VoucherService;
@@ -23,6 +24,7 @@ public final class PlayerSessionListener {
     private final @Nullable SkinService skins;
     private final @Nullable FriendService friends;
     private final @Nullable VoucherService vouchers;
+    private final @Nullable LiveService live;
 
     /**
      * @param skins null when SkinsRestorer is absent and there are no skin cooldowns to clear
@@ -33,12 +35,14 @@ public final class PlayerSessionListener {
             PrivateMessageService privateMessages,
             @Nullable SkinService skins,
             @Nullable FriendService friends,
-            @Nullable VoucherService vouchers) {
+            @Nullable VoucherService vouchers,
+            @Nullable LiveService live) {
 
         this.privateMessages = Objects.requireNonNull(privateMessages, "privateMessages");
         this.skins = skins;
         this.friends = friends;
         this.vouchers = vouchers;
+        this.live = live;
     }
 
     /**
@@ -64,6 +68,9 @@ public final class PlayerSessionListener {
         }
         if (this.vouchers != null) {
             this.vouchers.onDisconnect(playerId);
+        }
+        if (this.live != null) {
+            this.live.onDisconnect(playerId);
         }
     }
 }

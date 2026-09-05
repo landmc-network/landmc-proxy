@@ -371,6 +371,78 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice menuServerUnavailable =
             Notice.chat("<red>Błąd> <gray>Ten serwer jest niedostępny.");
 
+    // --- /live ---------------------------------------------------------------------------
+
+    @Comment("")
+    @Comment("Gracz uzyl /live, nie majac zarejestrowanego profilu.")
+    @CustomKey("live-no-profile")
+    public Notice liveNoProfile = Notice.chat(
+            "<red>Błąd> <gray>Nie masz ustawionego profilu transmisji."
+                    + " Poproś administrację o dodanie.");
+
+    @Comment("")
+    @Comment("Placeholder: {PLATFORM}")
+    @CustomKey("live-not-live")
+    public Notice liveNotLive = Notice.chat(
+            "<red>Błąd> <gray>Twój kanał na <white>{PLATFORM}</white> nie prowadzi teraz transmisji.");
+
+    @Comment("")
+    @Comment("Platforma nie odpowiedziala albo nie jest skonfigurowana. Placeholder: {PLATFORM}")
+    @CustomKey("live-check-failed")
+    public Notice liveCheckFailed = Notice.chat(
+            "<red>Błąd> <gray>Nie udało się sprawdzić transmisji na <white>{PLATFORM}</white>."
+                    + " Spróbuj za chwilę.");
+
+    @Comment("")
+    @Comment("Placeholder: {TIME}")
+    @CustomKey("live-cooldown")
+    public Notice liveCooldown = Notice.chat(
+            "<red>Błąd> <gray>Transmisję możesz ogłosić ponownie za <white>{TIME}</white>.");
+
+    @Comment("")
+    @Comment("Placeholdery: {PLAYER}, {URL}, {PLATFORM}")
+    @CustomKey("live-profile-saved")
+    public Notice liveProfileSaved = Notice.chat(
+            "<green><bold>LIVE</bold> <gray>Ustawiono profil gracza <white>{PLAYER}</white>:"
+                    + " <white>{PLATFORM}</white> <dark_gray>({URL})");
+
+    @Comment("")
+    @CustomKey("live-profile-removed")
+    public Notice liveProfileRemoved = Notice.chat(
+            "<green><bold>LIVE</bold> <gray>Usunięto profil gracza <white>{PLAYER}</white>.");
+
+    @Comment("")
+    @CustomKey("live-profile-missing")
+    public Notice liveProfileMissing = Notice.chat(
+            "<red>Błąd> <gray>Gracz <white>{PLAYER}</white> nie ma ustawionego profilu.");
+
+    @Comment("")
+    @CustomKey("live-invalid-link")
+    public Notice liveInvalidLink = Notice.chat(
+            "<red>Błąd> <gray>Podaj login Twitcha albo link do Twitcha, Kicka lub TikToka"
+                    + " <dark_gray>(kanał, nie klip ani skrócony link)</dark_gray>.");
+
+    @Comment("")
+    @CustomKey("live-list-header")
+    public Notice liveListHeader = Notice.chat(
+            "<green><bold>LIVE</bold> <gray>Zarejestrowani streamerzy (<white>{COUNT}</white>):");
+
+    @Comment("")
+    @Comment("Placeholdery: {PLAYER}, {PLATFORM}, {URL}")
+    @CustomKey("live-list-entry")
+    public Notice liveListEntry = Notice.chat(
+            "<dark_gray>- <white>{PLAYER}</white> <gray>{PLATFORM}"
+                    + " <click:open_url:'{URL}'><dark_gray>[link]</dark_gray></click>");
+
+    @Comment("")
+    @CustomKey("live-list-empty")
+    public Notice liveListEmpty = Notice.chat("<gray>Nikt nie ma jeszcze ustawionego profilu.");
+
+    @Comment("")
+    @CustomKey("live-failed")
+    public Notice liveFailed = Notice.chat(
+            "<red>Błąd> <gray>Nie udało się odczytać profili. Sprawdź konsolę.");
+
     @Comment("")
     @Comment("Nadawanie rang. Placeholdery: {RANK}, {PLAYER}, {TIME}")
     @CustomKey("rank-assigned")
