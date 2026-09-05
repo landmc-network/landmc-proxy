@@ -246,6 +246,20 @@ public class ProxyConfig extends OkaeriConfig {
                 ""));
 
         @Comment("")
+        @Comment("")
+        @Comment("Streamerzy wpisywani do bazy przy starcie, jesli jeszcze ich tam nie ma.")
+        @Comment("Klucz to nick w Minecrafcie, wartosc to link albo sam login na Twitchu.")
+        @Comment("Na co dzien dodaje sie ich przez /live dodaj - to jest lista na start")
+        @Comment("i po odtworzeniu bazy, wiec nic tu nie nadpisuje tego, co juz jest.")
+        public Map<String, String> streamers = new LinkedHashMap<>();
+
+        @Comment("")
+        @Comment("Dane aplikacji z Twitch Developer Console i Kick Developer Portal.")
+        @Comment("Puste celowo. Sekret nalezy trzymac w landmc-shared.yml obok folderow")
+        @Comment("pluginow - tak samo jak dane bazy - i wpisac tu ${LANDMC_TWITCH_CLIENT_ID}")
+        @Comment("oraz ${LANDMC_TWITCH_CLIENT_SECRET}. Domyslnie tego tu nie ma, bo brak")
+        @Comment("wartosci pod placeholderem zatrzymuje start proxy, a siec bez /live nie ma")
+        @Comment("powodu, zeby cokolwiek o Twitchu ustawiac.")
         public PlatformCredentials twitch = new PlatformCredentials();
 
         @Comment("")

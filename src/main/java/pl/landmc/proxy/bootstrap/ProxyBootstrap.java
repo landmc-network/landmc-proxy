@@ -7,6 +7,7 @@ import dev.rollczi.litecommands.LiteCommands;
 import dev.rollczi.litecommands.argument.resolver.standard.DurationArgumentResolver;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Map;
 import java.time.Instant;
 import java.util.Objects;
 import org.slf4j.Logger;
@@ -69,6 +70,7 @@ import pl.landmc.proxy.messaging.ServerCountBroadcaster;
 import pl.landmc.proxy.live.KickStatusClient;
 import pl.landmc.proxy.live.LiveRepository;
 import pl.landmc.proxy.live.LiveService;
+import pl.landmc.proxy.live.StreamProfile;
 import pl.landmc.proxy.live.TwitchStatusClient;
 import pl.landmc.proxy.menu.ProfileMenuService;
 import pl.landmc.proxy.menu.StatisticsMenuService;
@@ -546,6 +548,36 @@ public final class ProxyBootstrap {
      * and one set of threads for a feature that makes a request when somebody types a command,
      * rather than two of each sitting idle.
      */
+    /**
+     * Puts the configured streamers in the database, once each.
+     *
+     * <p>Only the ones that are not there: the file is a starting list rather than the truth
+     * about who streams, and the truth is what {@code /live dodaj} and {@code /live usun} wrote.
+     * Overwriting on every start would undo a removal the moment the proxy restarted.
+     */
+    private void seedStreamers(LiveService live) {
+        for (Map.Entry<String, String> entry : this.config.live.streamers.entrySet()) {
+            String name = entry.getKey();
+
+            StreamProfile profile = StreamProfile.parse(entry.getValue()).orElse(null);
+            if (profile == null) {
+                this.logger.warn(
+                        "Streamer {} has an address nothing can read ({}); skipped.",
+                        name, entry.getValue());
+                continue;
+            }
+
+            live.profile(name).thenAccept(existing -> {
+                if (existing.isEmpty()) {
+                    live.register(name, profile, "config");
+                }
+            }).exceptionally(throwable -> {
+                this.logger.warn("Could not add the streamer {} from the configuration", name, throwable);
+                return null;
+            });
+        }
+    }
+
     private void startLive() {
         if (!this.config.live.enabled) {
             return;
@@ -565,6 +597,7 @@ public final class ProxyBootstrap {
         this.live = new LiveService(
                 new LiveRepository(this.database), this.config, java.util.List.of(twitch, kick));
         this.live.createTables();
+        this.seedStreamers(this.live);
 
         // Said once, at startup, rather than discovered by a streamer whose announcement was
         // refused: a platform with no credentials cannot be checked, and a stream on it can
