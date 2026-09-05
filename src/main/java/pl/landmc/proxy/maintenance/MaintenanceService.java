@@ -1,6 +1,8 @@
 package pl.landmc.proxy.maintenance;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ProxyServer;
+import net.kyori.adventure.text.Component;
 import java.util.Objects;
 import pl.landmc.platform.config.ConfigService;
 import pl.landmc.proxy.config.ProxyConfig;
@@ -60,6 +62,33 @@ public final class MaintenanceService {
     }
 
     /** Whether this player must be turned away right now. */
+    /**
+     * Sends home everybody who is already here and may not stay.
+     *
+     * <p>Switching the mode on stopped new logins and left the network full of people, which is
+     * half a maintenance mode: the reason to close a network is usually that something is about
+     * to be restarted underneath whoever is standing on it. The old server disconnected
+     * everybody the moment the break was declared, and so does this.
+     *
+     * <p>Staff who can bypass stay. They are the ones who have work to do.
+     *
+     * @return how many were disconnected
+     */
+    public int disconnectEveryone(ProxyServer proxy, Component screen) {
+        Objects.requireNonNull(proxy, "proxy");
+        Objects.requireNonNull(screen, "screen");
+
+        int sent = 0;
+        for (Player player : proxy.getAllPlayers()) {
+            if (this.canBypass(player)) {
+                continue;
+            }
+            player.disconnect(screen);
+            sent++;
+        }
+        return sent;
+    }
+
     public boolean shouldReject(Player player) {
         return this.enabled && !this.canBypass(player);
     }

@@ -79,7 +79,9 @@ public class ProxyMessages extends OkaeriConfig {
 
     @Comment("")
     @CustomKey("maintenance-enabled")
-    public Notice maintenanceEnabled = Notice.chat("<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>włączony</white>.");
+    public Notice maintenanceEnabled = Notice.chat(
+            "<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>włączony</white>."
+                    + " Rozłączono <white>{COUNT}</white> gracz(y).");
 
     @CustomKey("maintenance-disabled")
     public Notice maintenanceDisabled = Notice.chat("<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>wyłączony</white>.");

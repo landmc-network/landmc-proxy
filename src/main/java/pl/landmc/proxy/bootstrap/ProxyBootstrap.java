@@ -252,7 +252,9 @@ public final class ProxyBootstrap {
                         new ServerCommand(servers, routing, notices),
                         new LobbyCommand(routing, notices),
                         new SendCommand(this.proxy, servers, routing, notices),
-                        new MaintenanceCommand(maintenance, notices),
+                        new MaintenanceCommand(
+                                maintenance, notices, this.proxy, formatter,
+                                () -> this.messages),
                         new HelpOpCommand(notices),
                         new AdminChatCommand(notices, ranks),
                         new PrivateMessageCommands.Message(this.privateMessages),
