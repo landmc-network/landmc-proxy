@@ -99,7 +99,16 @@ final class LuckPermsRankProvider implements RankProvider {
 
             return this.luckPerms.getUserManager()
                     .saveUser(user)
-                    .thenApply(ignored -> RankAssignment.assigned(group.getName(), nameOf(user, playerId)));
+                    .thenApply(ignored -> {
+                        // Saving tells the database, not the other servers. LuckPerms pushes an
+                        // update for its own commands but not for a change made through the
+                        // API, so without this the backends keep the rank they had cached and
+                        // the player's prefix stays wrong until they reconnect.
+                        this.luckPerms.getMessagingService()
+                                .ifPresent(messaging -> messaging.pushUserUpdate(user));
+
+                        return RankAssignment.assigned(group.getName(), nameOf(user, playerId));
+                    });
         });
     }
 
