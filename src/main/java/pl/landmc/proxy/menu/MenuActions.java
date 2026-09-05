@@ -89,6 +89,7 @@ public final class MenuActions {
             case "friends" -> this.dispatch(player, "friend");
             // The tile the old profile had: straight into the rank shop.
             case "shop" -> this.dispatch(player, "rangi");
+            case "visual" -> this.dispatch(player, "rangiwizualne");
             case "premium" -> this.dispatch(player, "premium");
             default -> this.logger.debug("Unknown profile menu action: {}", action.action());
         }
