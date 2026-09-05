@@ -26,6 +26,7 @@ import pl.landmc.proxy.command.HelpOpCommand;
 import pl.landmc.proxy.command.LobbyCommand;
 import pl.landmc.proxy.command.MaintenanceCommand;
 import pl.landmc.proxy.command.PrivateMessageCommands;
+import pl.landmc.proxy.command.ReportCommand;
 import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.LiveCommand;
@@ -81,6 +82,7 @@ import pl.landmc.proxy.command.SkinCommand;
 import pl.landmc.proxy.resourcepack.ManifestSource;
 import pl.landmc.proxy.resourcepack.ResourcePackRebuiltMessage;
 import pl.landmc.proxy.resourcepack.ResourcePackService;
+import pl.landmc.proxy.report.ReportService;
 import pl.landmc.proxy.routing.RoutingService;
 import pl.landmc.proxy.skin.SkinService;
 import pl.landmc.proxy.vanish.VanishProvider;
@@ -125,6 +127,7 @@ public final class ProxyBootstrap {
     private ServerHealth serverHealth;
     private VoucherService vouchers;
     private LiveService live;
+    private ReportService reports;
 
     /** Commands that are always present; the optional ones are counted alongside them. */
     private static final int CORE_COMMAND_COUNT = 13;
@@ -213,7 +216,15 @@ public final class ProxyBootstrap {
 
         ServerMenuService serverMenu =
                 new ServerMenuService(this.proxy, this.config, this.serverHealth);
-        new MenuActions(this.proxy, this.friends, routing, serverMenu, notices, this.logger)
+
+        // Reports are a menu and a command over the same service, so it is built here and the
+        // command picks it up below; switched off, neither the handler nor the command exists.
+        this.reports = this.config.report.enabled
+                ? new ReportService(this.config, notices, ranks, () -> this.messages)
+                : null;
+
+        new MenuActions(
+                this.proxy, this.friends, routing, serverMenu, this.reports, notices, this.logger)
                 .registerOn(this.menuBridge);
 
         Object[] optional = this.optionalCommands(notices, serverMenu, ranks);
@@ -443,6 +454,10 @@ public final class ProxyBootstrap {
         if (this.config.menus.lobbiesEnabled) {
             optional.add(new LobbyMenuCommand(serverMenu, this.menuBridge, notices));
         }
+        if (this.reports != null) {
+            optional.add(new ReportCommand(this.reports, this.menuBridge, notices));
+        }
+
         optional.add(new StatisticsCommand(
                 new StatisticsMenuService(this.friends, ranks, () -> this.messages),
                 this.menuBridge, notices, this.logger));

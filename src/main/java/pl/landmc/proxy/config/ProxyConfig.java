@@ -63,6 +63,9 @@ public class ProxyConfig extends OkaeriConfig {
     public SkinSection skin = new SkinSection();
 
     @Comment("")
+    public ReportSection report = new ReportSection();
+
+    @Comment("")
     @CustomKey("motd")
     public MotdSection motd = new MotdSection();
 
@@ -256,6 +259,59 @@ public class ProxyConfig extends OkaeriConfig {
 
         @CustomKey("client-secret")
         public String clientSecret = "";
+    }
+
+    /** Zgloszenia graczy - komenda /zglos i menu z powodami. */
+    public static class ReportSection extends OkaeriConfig {
+
+        @Comment("Komenda /zglos. Wylaczona nie rejestruje sie wcale.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Uprawnienie do odbierania zgloszen. Na starym LandMC byla to ranga POMOCNIK.")
+        @CustomKey("receive-permission")
+        public String receivePermission = "landmc.report.receive";
+
+        @Comment("")
+        @Comment("Ile sekund miedzy zgloszeniami TEJ SAMEJ pary graczy.")
+        @Comment("Na pare, nie na gracza: zgloszenie jednego nie moze blokowac zgloszenia")
+        @Comment("drugiego, ktory w tej samej chwili robi cos innego.")
+        @CustomKey("cooldown-seconds")
+        public int cooldownSeconds = 30;
+
+        @Comment("")
+        @Comment("Powody, ich miejsce w menu i material kafelka. Lista ze starego LandMC.")
+        public List<ReportReason> reasons = new ArrayList<>(List.of(
+                reason("cheaty", "<red>CHEATY", "DIAMOND_SWORD", 22),
+                reason("wulgarne", "<red>WULGARNE ZACHOWANIE", "PAPER", 37),
+                reason("oszustwo", "<red>OSZUSTWO", "SUNFLOWER", 39),
+                reason("sojusz", "<red>SOJUSZ", "PLAYER_HEAD", 41),
+                reason("spam", "<red>SPAM/FLOOD", "PAPER", 43)));
+
+        private static ReportReason reason(String id, String label, String material, int slot) {
+            ReportReason reason = new ReportReason();
+            reason.id = id;
+            reason.label = label;
+            reason.material = material;
+            reason.slot = slot;
+            return reason;
+        }
+    }
+
+    /** One thing somebody can be reported for. */
+    public static class ReportReason extends OkaeriConfig {
+
+        @Comment("Identyfikator wysylany po klknieciu. Powod spoza tej listy jest odrzucany.")
+        public String id = "";
+
+        @Comment("Jak powod czyta sie w menu i w zgloszeniu.")
+        public String label = "";
+
+        @Comment("Material kafelka.")
+        public String material = "PAPER";
+
+        @Comment("Miejsce w menu.")
+        public int slot = 0;
     }
 
     /** Co widac na liscie serwerow, zanim ktokolwiek sie polaczy. */

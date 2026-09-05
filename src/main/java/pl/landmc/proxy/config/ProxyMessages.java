@@ -109,6 +109,39 @@ public class ProxyMessages extends OkaeriConfig {
             Notice.chat("<green><bold>SIEĆ</bold> <gray>Przeniesiono <white>{COUNT}</white> graczy na <white>{SERVER}</white>.");
 
     @Comment("")
+    @Comment("")
+    @Comment("Zgloszenia. Placeholdery: {PLAYER} - zglaszajacy, {REPORTED} - zgloszony,")
+    @Comment("{REASON} - powod, {SERVER} - serwer zglaszajacego.")
+    @CustomKey("report-broadcast")
+    public Notice reportBroadcast = Notice.chat(
+            "<red><bold>REPORT</bold> <gray>{PLAYER} <white>-> <gray>{REPORTED}"
+                    + " <white>: <red>{REASON} <dark_gray>({SERVER})");
+
+    @CustomKey("report-sent")
+    public Notice reportSent = Notice.chat(
+            "<gray>Pomyślnie zgłoszono gracza <green>{REPORTED} <gray>za: <red>{REASON}");
+
+    @Comment("")
+    @CustomKey("report-self")
+    public Notice reportSelf = Notice.chat("<red>Błąd> <gray>Nie możesz zgłosić samego siebie!");
+
+    @Comment("Placeholder: {TIME}")
+    @CustomKey("report-cooldown")
+    public Notice reportCooldown = Notice.chat(
+            "<red>Błąd> <gray>Musisz odczekać <white>{TIME}s</white>"
+                    + " przed kolejnym zgłoszeniem tego gracza.");
+
+    @Comment("")
+    @Comment("Gdy backend nie rysuje menu albo gracz jest miedzy serwerami.")
+    @CustomKey("report-unavailable")
+    public Notice reportUnavailable = Notice.chat(
+            "<red>Błąd> <gray>Menu zgłoszenia jest chwilowo niedostępne.");
+
+    @Comment("Gdy kliknieto powod, ktorego nie ma juz na liscie.")
+    @CustomKey("report-unknown-reason")
+    public Notice reportUnknownReason = Notice.chat(
+            "<red>Błąd> <gray>Ten powód zgłoszenia już nie istnieje.");
+
     @Comment("Zgloszenie /helpop widziane przez ekipe. Placeholdery: {PLAYER}, {SERVER}, {MESSAGE}")
     @CustomKey("helpop-report")
     public Notice helpOpReport = Notice.chat(

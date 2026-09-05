@@ -11,8 +11,10 @@ import org.slf4j.Logger;
 import pl.landmc.menus.protocol.MenuAction;
 import pl.landmc.menus.protocol.MenuKind;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
+import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.friend.FriendService;
+import pl.landmc.proxy.report.ReportService;
 import pl.landmc.proxy.routing.RoutingService;
 
 /**
@@ -40,6 +42,9 @@ public final class MenuActions {
     private final @Nullable FriendService friends;
     private final RoutingService routing;
     private final ServerMenuService servers;
+
+    /** Null when reports are switched off, in which case that menu has no actions either. */
+    private final @Nullable ReportService reports;
     private final VelocityNoticeService<ProxyMessages> notices;
     private final Logger logger;
 
@@ -48,6 +53,7 @@ public final class MenuActions {
             @Nullable FriendService friends,
             RoutingService routing,
             ServerMenuService servers,
+            @Nullable ReportService reports,
             VelocityNoticeService<ProxyMessages> notices,
             Logger logger) {
 
@@ -55,6 +61,7 @@ public final class MenuActions {
         this.friends = friends;
         this.routing = Objects.requireNonNull(routing, "routing");
         this.servers = Objects.requireNonNull(servers, "servers");
+        this.reports = reports;
         this.notices = Objects.requireNonNull(notices, "notices");
         this.logger = Objects.requireNonNull(logger, "logger");
     }
@@ -74,6 +81,42 @@ public final class MenuActions {
         bridge.handler(MenuKind.LOBBIES, this::onLobbiesAction);
         bridge.handler(MenuKind.PROFILE, this::onProfileAction);
         bridge.handler(MenuKind.STATISTICS, this::onStatisticsAction);
+        if (this.reports != null) {
+            bridge.handler(MenuKind.REPORT, this::onReportAction);
+        }
+    }
+
+    /**
+     * A reason was picked in the report menu.
+     *
+     * <p>Nothing about who is being reported comes from the click. The proxy remembered that
+     * when the command ran, and this only supplies the reason - which is then checked against
+     * the configured list, because the click arrives over a player's own connection.
+     *
+     * <p>The cooldown starts here rather than when the menu opened: a player who opens it and
+     * closes it without choosing has not reported anybody and should not be made to wait.
+     */
+    private void onReportAction(Player player, MenuAction action) {
+        if (this.reports == null || !"send".equals(action.action())) {
+            this.logger.debug("Unknown report menu action: {}", action.action());
+            return;
+        }
+
+        ReportService.Pending open = this.reports.pending(player.getUniqueId());
+        if (open == null) {
+            // The menu was opened more than a couple of minutes ago, or never - a click with
+            // nothing behind it. Silent: there is nobody this could name.
+            return;
+        }
+
+        ProxyConfig.ReportReason reason = this.reports.reason(action.argument());
+        if (reason == null) {
+            this.notices.viewer(player, messages -> messages.reportUnknownReason);
+            return;
+        }
+
+        this.reports.send(player, open.username(), reason);
+        this.reports.startCooldown(player.getUniqueId(), open.reported());
     }
 
     /**
