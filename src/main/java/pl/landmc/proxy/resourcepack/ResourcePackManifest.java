@@ -8,12 +8,22 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * What the builder says about the pack it published.
+ *
+ * <p>{@code required} and {@code kickOnFailure} are two questions, not one, and conflating them
+ * is how a network locks itself out. The first asks whether the client applies the pack without
+ * being asked; the second asks what happens when that goes wrong. A pack can be forced and
+ * still forgiven - the player gets in without it and sees a plainer interface, which is a far
+ * better answer to a bad build than a closed door.
+ */
 public record ResourcePackManifest(
         int version,
         String packId,
         String sha1,
         String urlTemplate,
         boolean required,
+        boolean kickOnFailure,
         String prompt,
         int maxAttempts,
         long retryDelayMillis,

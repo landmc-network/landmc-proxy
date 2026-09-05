@@ -295,7 +295,7 @@ public final class ResourcePackService implements AutoCloseable {
                     player.getUsername(), exception.getMessage());
             this.states.remove(player.getUniqueId());
 
-            if (current.required()) {
+            if (current.kickOnFailure()) {
                 player.disconnect(this.formatter.format(current.downloadFailedKickMessage()));
                 this.openGate(player.getUniqueId(), false);
             }
@@ -338,6 +338,18 @@ public final class ResourcePackService implements AutoCloseable {
         }
 
         this.states.remove(player.getUniqueId(), state);
+
+        if (!current.kickOnFailure()) {
+            // Every attempt failed, and that is the end of it: the player comes in without the
+            // pack. A build that does not load is our problem, not theirs, and it is the one
+            // failure they can do nothing at all about.
+            this.logger.warn(
+                    "{} could not take the resource pack ({}); letting them in without it.",
+                    player.getUsername(), declined ? "declined" : "download failed");
+            this.complete(player, current);
+            return;
+        }
+
         player.disconnect(this.formatter.format(
                 declined ? current.declinedKickMessage() : current.downloadFailedKickMessage()));
         this.openGate(player.getUniqueId(), false);
