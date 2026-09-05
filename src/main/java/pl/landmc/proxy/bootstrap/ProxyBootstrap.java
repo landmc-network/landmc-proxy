@@ -46,10 +46,12 @@ import pl.landmc.proxy.listener.CommandExecuteListener;
 import pl.landmc.proxy.listener.CooldownListener;
 import pl.landmc.proxy.listener.JoinDebugListener;
 import pl.landmc.proxy.listener.MaintenanceListener;
+import pl.landmc.proxy.listener.MotdListener;
 import pl.landmc.proxy.listener.PlayerRoutingListener;
 import pl.landmc.proxy.listener.PlayerSessionListener;
 import pl.landmc.proxy.listener.ResourcePackListener;
 import pl.landmc.proxy.maintenance.MaintenanceService;
+import pl.landmc.proxy.motd.MotdService;
 import pl.landmc.proxy.messaging.PingMessage;
 import pl.landmc.proxy.messaging.PongMessage;
 import pl.landmc.proxy.messaging.ProxyMessaging;
@@ -241,6 +243,14 @@ public final class ProxyBootstrap {
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
                 new MaintenanceListener(maintenance, this.messages, formatter));
+
+        MotdService motd = new MotdService(
+                this.config, formatter, this.dataDirectory, this.logger);
+        if (motd.isEnabled()) {
+            this.proxy.getEventManager().register(
+                    this.container.getInstance().orElseThrow(),
+                    new MotdListener(motd, maintenance));
+        }
         this.proxy.getEventManager().register(
                 this.container.getInstance().orElseThrow(),
                 new PlayerRoutingListener(routing, this.presence, this.config, this.messages, formatter, this.logger));

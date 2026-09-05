@@ -63,6 +63,10 @@ public class ProxyConfig extends OkaeriConfig {
     public SkinSection skin = new SkinSection();
 
     @Comment("")
+    @CustomKey("motd")
+    public MotdSection motd = new MotdSection();
+
+    @Comment("")
     public MenusSection menus = new MenusSection();
 
     @Comment("")
@@ -252,6 +256,60 @@ public class ProxyConfig extends OkaeriConfig {
 
         @CustomKey("client-secret")
         public String clientSecret = "";
+    }
+
+    /** Co widac na liscie serwerow, zanim ktokolwiek sie polaczy. */
+    public static class MotdSection extends OkaeriConfig {
+
+        @Comment("Czy proxy przepisuje ping z listy serwerow.")
+        @Comment("Wylaczone = zostaje to, co mowi velocity.toml.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Dwie linie opisu. Placeholdery: {ONLINE}, {MAX}")
+        public List<String> lines = new ArrayList<>(List.of(
+                "<gradient:#00FF37:#95ff00><bold>LandMC</bold></gradient>"
+                        + " <dark_gray>» <gray>Sieć serwerów Minecraft",
+                "<green>SkyBlock <dark_gray>| <gray>Online: <white>{ONLINE}<gray>/<white>{MAX}"));
+
+        @Comment("")
+        @Comment("To samo, gdy wlaczony jest tryb techniczny. To jest wlasciwy powod,")
+        @Comment("dla ktorego to istnieje: przerwa, o ktorej gracz dowiaduje sie dopiero")
+        @Comment("po rozlaczeniu, to przerwa, o ktorej kazdy dowiaduje sie na twardo.")
+        @CustomKey("maintenance-lines")
+        public List<String> maintenanceLines = new ArrayList<>(List.of(
+                "<red><bold>PRZERWA TECHNICZNA",
+                "<gray>Wrócimy niedługo. <dark_gray>» <white>landmc.pl"));
+
+        @Comment("")
+        @Comment("Lista pod kursorem. Pusta = zostaje to, co wysyla proxy.")
+        public List<String> hover = new ArrayList<>(List.of(
+                "<gradient:#00FF37:#95ff00><bold>LandMC</bold></gradient>",
+                "<dark_gray>»",
+                "<gray>Dołącz: <white>landmc.pl"));
+
+        @CustomKey("maintenance-hover")
+        public List<String> maintenanceHover = new ArrayList<>(List.of(
+                "<red><bold>PRZERWA TECHNICZNA",
+                "<dark_gray>»",
+                "<gray>Serwer wróci niedługo."));
+
+        @Comment("")
+        @Comment("Maksymalna liczba graczy pokazywana na liscie. 0 = to, co velocity.toml.")
+        @CustomKey("max-players")
+        public int maxPlayers = 0;
+
+        @Comment("")
+        @Comment("Napis w miejscu wersji podczas przerwy. Puste = bez zmiany.")
+        @Comment("Klient nie dopasuje protokolu i pokaze go na czerwono - o to chodzi.")
+        @CustomKey("maintenance-version")
+        public String maintenanceVersion = "Przerwa techniczna";
+
+        @Comment("")
+        @Comment("Ikona obok nazwy - plik PNG 64x64 w katalogu tego pluginu.")
+        @Comment("Brak pliku to normalny przypadek i nic nie znaczy.")
+        @CustomKey("icon-file")
+        public String iconFile = "server-icon.png";
     }
 
     /** Menu rysowane na backendzie, wypelniane danymi stad. */
