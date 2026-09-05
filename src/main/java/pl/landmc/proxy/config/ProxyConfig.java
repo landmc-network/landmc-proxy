@@ -262,11 +262,14 @@ public class ProxyConfig extends OkaeriConfig {
         public boolean serversEnabled = true;
 
         @Comment("")
-        @Comment("Ktore serwery pokazac i pod jaka nazwa, w tej kolejnosci.")
+        @Comment("Ktore serwery pokazac i jak ma wygladac kazdy kafelek.")
         @Comment("Wpisane recznie, bo lista z velocity.toml zawiera tez limbo i wszystko,")
-        @Comment("czego gracz nie ma wybierac - a kolejnosc w menu to decyzja, nie przypadek.")
-        @Comment("Serwer spoza tej listy nie pojawi sie w menu, nawet jesli istnieje.")
-        public Map<String, String> servers = new LinkedHashMap<>(Map.of("lobby", "Lobby"));
+        @Comment("czego gracz nie ma wybierac. Serwer spoza tej listy nie pojawi sie w menu,")
+        @Comment("nawet jesli istnieje.")
+        @Comment("Slot, material i lore sa tutaj, a nie w configu menu na backendzie, bo tutaj")
+        @Comment("jest lista serwerow - dolozenie trybu to jeden wpis w jednym miejscu.")
+        @Comment("W lore dziala {ONLINE}.")
+        public List<MenuServer> servers = new ArrayList<>(List.of(skyblockDefaults()));
 
         @Comment("")
         @Comment("Podserwery - instancje lobby, miedzy ktorymi gracz moze sie przelaczac.")
@@ -276,7 +279,7 @@ public class ProxyConfig extends OkaeriConfig {
         public boolean lobbiesEnabled = true;
 
         @CustomKey("lobbies")
-        public Map<String, String> lobbies = new LinkedHashMap<>(Map.of("lobby", "Hub #1"));
+        public List<MenuServer> lobbies = new ArrayList<>(List.of(hubDefaults()));
 
         @Comment("")
         @Comment("Ile milisekund czekac na polaczenie z serwerem, zanim menu oznaczy go jako")
@@ -293,6 +296,63 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("niezaleznie od tego, ilu graczy otworzy menu.")
         @CustomKey("health-interval-seconds")
         public int healthIntervalSeconds = 15;
+
+        /** SkyBlock stood in the middle of the old menu as a block of grass. */
+        private static MenuServer skyblockDefaults() {
+            MenuServer server = new MenuServer();
+            server.id = "skyblock";
+            server.slot = 22;
+            server.material = "GRASS_BLOCK";
+            server.name = "<green>SkyBlock";
+            server.lore = new ArrayList<>(List.of(
+                    "<gray>Stwórz własną wyspę, a następnie postaw wspaniałe budowle.",
+                    "<gray>Wykonuj zadania, osiągnięcia. Sprzedawaj zdobyte przedmioty, ...",
+                    "<gray>... a następnie zdobądź top 10 wysp!",
+                    "",
+                    "<white>Online: <green>{ONLINE}",
+                    "",
+                    "<yellow>Kliknij, aby przejść na ten serwer."));
+            return server;
+        }
+
+        /** A hub, drawn as a dye the way the old lobby list drew them. */
+        private static MenuServer hubDefaults() {
+            MenuServer server = new MenuServer();
+            server.id = "lobby";
+            server.slot = 0;
+            server.material = "LIME_DYE";
+            server.name = "<green>Lobby #1";
+            server.lore = new ArrayList<>(List.of(
+                    "",
+                    "<white>Online: <green>{ONLINE}",
+                    "",
+                    "<yellow>Kliknij, aby zmienić podserwer."));
+            return server;
+        }
+    }
+
+    /**
+     * One tile in a server menu.
+     *
+     * <p>Everything about how it looks travels to the backend that draws it, so a new mode is
+     * one entry here rather than an entry here and a matching one in every backend's messages.
+     */
+    public static class MenuServer extends OkaeriConfig {
+
+        @Comment("Nazwa serwera z velocity.toml.")
+        public String id = "";
+
+        @Comment("Miejsce w menu, liczone od lewego gornego rogu.")
+        public int slot = 0;
+
+        @Comment("Material kafelka.")
+        public String material = "PAPER";
+
+        @Comment("Nazwa kafelka, z wlasnym kolorem.")
+        public String name = "";
+
+        @Comment("Linie pod nazwa. {ONLINE} to liczba graczy.")
+        public List<String> lore = new ArrayList<>();
     }
 
     public static class VouchersSection extends OkaeriConfig {

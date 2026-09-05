@@ -9,6 +9,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.time.Duration;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -76,10 +78,15 @@ public final class ServerHealth {
     }
 
     void check() {
-        for (Map.Entry<String, String> entry : this.config.menus.servers.entrySet()) {
-            RegisteredServer server = this.proxy.getServer(entry.getKey()).orElse(null);
+        // Both menus, because both draw a server as unavailable and a hub that is down is worth
+        // knowing about for exactly the same reason a mode that is down is.
+        List<ProxyConfig.MenuServer> configured = new ArrayList<>(this.config.menus.servers);
+        configured.addAll(this.config.menus.lobbies);
+
+        for (ProxyConfig.MenuServer entry : configured) {
+            RegisteredServer server = this.proxy.getServer(entry.id).orElse(null);
             if (server == null) {
-                this.reachable.remove(entry.getKey());
+                this.reachable.remove(entry.id);
                 continue;
             }
 
@@ -87,12 +94,12 @@ public final class ServerHealth {
                     server.getServerInfo().getAddress(),
                     (int) Math.max(1L, this.config.menus.reachabilityTimeoutMillis));
 
-            Boolean previous = this.reachable.put(entry.getKey(), answered);
+            Boolean previous = this.reachable.put(entry.id, answered);
             if (previous != null && previous != answered) {
                 // Worth a line: a backend going away and coming back is exactly what somebody
                 // reading the log after a complaint about the menu is looking for.
                 this.logger.info(
-                        "Server {} is now {}.", entry.getKey(), answered ? "reachable" : "unreachable");
+                        "Server {} is now {}.", entry.id, answered ? "reachable" : "unreachable");
             }
         }
     }

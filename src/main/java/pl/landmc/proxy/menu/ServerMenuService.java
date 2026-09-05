@@ -44,12 +44,11 @@ public final class ServerMenuService {
         return this.listed(this.config.menus.lobbies);
     }
 
-    private Map<String, RegisteredServer> listed(Map<String, String> configured) {
+    private Map<String, RegisteredServer> listed(List<ProxyConfig.MenuServer> configured) {
         Map<String, RegisteredServer> listed = new LinkedHashMap<>();
 
-        for (Map.Entry<String, String> entry : configured.entrySet()) {
-            this.proxy.getServer(entry.getKey())
-                    .ifPresent(server -> listed.put(entry.getKey(), server));
+        for (ProxyConfig.MenuServer entry : configured) {
+            this.proxy.getServer(entry.id).ifPresent(server -> listed.put(entry.id, server));
         }
         return listed;
     }
@@ -72,33 +71,45 @@ public final class ServerMenuService {
     /** Builds the payload. No I/O: the health of each server was checked in the background. */
     public MenuPayload.Servers payload(Player player) {
         String current = currentServerOf(player);
-        return new MenuPayload.Servers(
-                current, this.entries(current, this.listed(), this.config.menus.servers));
+        return new MenuPayload.Servers(current, this.entries(current, this.config.menus.servers));
     }
 
     /** The same, for the lobbies. */
     public MenuPayload.Lobbies lobbies(Player player) {
         String current = currentServerOf(player);
-        return new MenuPayload.Lobbies(
-                current,
-                this.entries(current, this.listedLobbies(), this.config.menus.lobbies));
+        return new MenuPayload.Lobbies(current, this.entries(current, this.config.menus.lobbies));
     }
 
+    /**
+     * Turns the configured tiles into what the menu draws.
+     *
+     * <p>A configured server that Velocity does not know is left out rather than drawn dead: it
+     * is a typo in the configuration, not a server that happens to be down, and offering it
+     * would send whoever clicked it nowhere.
+     */
     private List<MenuPayload.Servers.Server> entries(
-            String current, Map<String, RegisteredServer> listed, Map<String, String> names) {
+            String current, List<ProxyConfig.MenuServer> configured) {
 
-        List<MenuPayload.Servers.Server> servers = new ArrayList<>(listed.size());
-        for (Map.Entry<String, RegisteredServer> entry : listed.entrySet()) {
+        List<MenuPayload.Servers.Server> servers = new ArrayList<>(configured.size());
+
+        for (ProxyConfig.MenuServer entry : configured) {
+            Optional<RegisteredServer> registered = this.proxy.getServer(entry.id);
+            if (registered.isEmpty()) {
+                continue;
+            }
+
             // A server the player is standing on is reachable by definition, whatever the last
             // check made of it.
-            boolean reachable = entry.getKey().equals(current)
-                    || this.health.isReachable(entry.getKey());
+            boolean reachable = entry.id.equals(current) || this.health.isReachable(entry.id);
 
             servers.add(new MenuPayload.Servers.Server(
-                    entry.getKey(),
-                    names.getOrDefault(entry.getKey(), entry.getKey()),
-                    entry.getValue().getPlayersConnected().size(),
-                    reachable));
+                    entry.id,
+                    entry.name.isBlank() ? entry.id : entry.name,
+                    registered.get().getPlayersConnected().size(),
+                    reachable,
+                    entry.slot,
+                    entry.material,
+                    entry.lore));
         }
         return servers;
     }

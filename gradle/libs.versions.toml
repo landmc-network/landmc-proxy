@@ -9,7 +9,7 @@
 landmc-platform = "1.4.0"
 
 # The menu wire format, published by landmc-menus.
-landmc-menus = "1.7.0"
+landmc-menus = "1.8.0"
 
 # Embedded database, shipped so the friends list works before anyone configures MariaDB.
 h2 = "2.4.240"
