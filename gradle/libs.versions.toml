@@ -6,7 +6,7 @@
 [versions]
 
 # Must match the version published by landmc-platform.
-landmc-platform = "1.2.0"
+landmc-platform = "1.4.0"
 
 # The menu wire format, published by landmc-menus.
 landmc-menus = "1.1.0"

@@ -6,12 +6,14 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import dev.rollczi.litecommands.annotations.argument.Arg;
+import dev.rollczi.litecommands.annotations.argument.Key;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
 import dev.rollczi.litecommands.annotations.permission.Permission;
 import java.util.Objects;
 import java.util.Optional;
+import pl.landmc.platform.proxy.command.VelocityCommands;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.routing.RoutingService;
@@ -49,7 +51,7 @@ public class SendCommand {
     @Execute
     void execute(
             @Context CommandSource sender,
-            @Arg("gracz") String targetName,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String targetName,
             @Arg("serwer") String serverId) {
 
         Optional<RegisteredServer> target = this.servers.get(serverId);

@@ -3,6 +3,7 @@ package pl.landmc.proxy.command;
 import com.eternalcode.multification.shared.Formatter;
 import com.velocitypowered.api.proxy.Player;
 import dev.rollczi.litecommands.annotations.argument.Arg;
+import dev.rollczi.litecommands.annotations.argument.Key;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
@@ -13,6 +14,7 @@ import java.util.StringJoiner;
 import java.util.UUID;
 import java.util.function.Function;
 import org.slf4j.Logger;
+import pl.landmc.platform.proxy.command.VelocityCommands;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
@@ -85,21 +87,25 @@ public class FriendCommand {
     }
 
     @Execute(name = "zapros", aliases = {"dodaj", "invite", "add"})
-    void invite(@Context Player player, @Arg("gracz") String target) {
+    void invite(@Context Player player, @Key(VelocityCommands.PLAYER) @Arg("gracz") String target) {
         this.friends.invite(player, target)
                 .thenAccept(outcome -> this.replyToInvite(player, outcome))
                 .exceptionally(this.report(player, "invite " + target));
     }
 
     @Execute(name = "akceptuj", aliases = {"przyjmij", "accept"})
-    void accept(@Context Player player, @Arg("gracz") String requester) {
+    void accept(
+            @Context Player player,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String requester) {
         this.friends.accept(player, requester)
                 .thenAccept(result -> this.replyToAccept(player, result, requester))
                 .exceptionally(this.report(player, "accept " + requester));
     }
 
     @Execute(name = "odrzuc", aliases = {"odrzuć", "decline", "deny"})
-    void decline(@Context Player player, @Arg("gracz") String requester) {
+    void decline(
+            @Context Player player,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String requester) {
         this.friends.decline(player, requester)
                 .thenAccept(declined -> this.notices.create()
                         .viewer(player)
@@ -113,7 +119,7 @@ public class FriendCommand {
     }
 
     @Execute(name = "usun", aliases = {"usuń", "remove", "delete"})
-    void remove(@Context Player player, @Arg("gracz") String target) {
+    void remove(@Context Player player, @Key(VelocityCommands.PLAYER) @Arg("gracz") String target) {
         this.friends.remove(player, target)
                 .thenAccept(removed -> {
                     this.notices.create()

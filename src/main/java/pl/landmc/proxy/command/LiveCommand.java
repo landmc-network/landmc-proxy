@@ -5,6 +5,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.rollczi.litecommands.annotations.argument.Arg;
+import dev.rollczi.litecommands.annotations.argument.Key;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
@@ -15,6 +16,7 @@ import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import org.slf4j.Logger;
 import pl.landmc.platform.component.ComponentFormatter;
+import pl.landmc.platform.proxy.command.VelocityCommands;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
@@ -149,7 +151,7 @@ public final class LiveCommand {
     @Permission("landmc.command.live.admin")
     void add(
             @Context CommandSource sender,
-            @Arg("gracz") String playerName,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String playerName,
             @Arg("login lub link") String link) {
 
         StreamProfile profile = StreamProfile.parse(link).orElse(null);
@@ -180,7 +182,9 @@ public final class LiveCommand {
     /** {@code /live usun <gracz>} */
     @Execute(name = "usun", aliases = {"usuń", "remove", "delete"})
     @Permission("landmc.command.live.admin")
-    void remove(@Context CommandSource sender, @Arg("gracz") String playerName) {
+    void remove(
+            @Context CommandSource sender,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String playerName) {
         this.live.unregister(playerName)
                 .thenAccept(removed -> this.notices.create()
                         .viewer(sender)

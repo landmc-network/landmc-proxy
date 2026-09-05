@@ -4,6 +4,7 @@ import com.eternalcode.multification.shared.Formatter;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ProxyServer;
 import dev.rollczi.litecommands.annotations.argument.Arg;
+import dev.rollczi.litecommands.annotations.argument.Key;
 import dev.rollczi.litecommands.annotations.command.Command;
 import dev.rollczi.litecommands.annotations.context.Context;
 import dev.rollczi.litecommands.annotations.execute.Execute;
@@ -12,6 +13,7 @@ import java.time.Duration;
 import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
+import pl.landmc.platform.proxy.command.VelocityCommands;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.rank.RankProvider;
@@ -56,7 +58,7 @@ public class RankCommand {
     @Execute
     void permanently(
             @Context CommandSource sender,
-            @Arg("gracz") String target,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String target,
             @Arg("ranga") String group) {
 
         this.assign(sender, target, group, null, "");
@@ -65,7 +67,7 @@ public class RankCommand {
     @Execute
     void temporarily(
             @Context CommandSource sender,
-            @Arg("gracz") String target,
+            @Key(VelocityCommands.PLAYER) @Arg("gracz") String target,
             @Arg("ranga") String group,
             @Arg("czas") Duration duration) {
 
