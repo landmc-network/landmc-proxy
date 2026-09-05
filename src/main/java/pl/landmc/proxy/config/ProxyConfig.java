@@ -75,6 +75,9 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public LiveSection live = new LiveSection();
 
+    @Comment("")
+    public AdvertsSection adverts = new AdvertsSection();
+
     @CustomKey("server-counts")
     public ServerCountsSection serverCounts = new ServerCountsSection();
 
@@ -598,6 +601,38 @@ public class ProxyConfig extends OkaeriConfig {
      * for: the number is the same for everybody, and a request per sign per two seconds would
      * be a conversation about something already public.
      */
+    /**
+     * Advertising in the commands the proxy answers itself.
+     *
+     * <p>The chat filter lives on the backend, where a message is written. It never sees
+     * {@code /msg}: that command is registered here, Velocity answers it and no backend hears
+     * about it - which is exactly the channel somebody advertising wants, because it reaches
+     * one chosen person rather than a room.
+     */
+    public static class AdvertsSection extends OkaeriConfig {
+
+        @Comment("Czy proxy blokuje adresy w komendach, ktore samo obsluguje.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Uprawnienie pozwalajace pisac odnosniki. Te samo, co w landmc-chat.")
+        public String permission = "landmc.chat.links";
+
+        @Comment("")
+        @Comment("Fragmenty uznawane za adres. Ta sama lista, co w landmc-chat -")
+        @Comment("dopisujac cos tutaj, dopisz to i tam.")
+        public List<String> fragments =
+                new ArrayList<>(pl.landmc.platform.text.AdvertText.DEFAULT_FRAGMENTS);
+
+        @Comment("")
+        @Comment("Komendy, ktorych to nie dotyczy. Logowanie MUSI tu byc: haslo z kropka")
+        @Comment("wyglada jak adres, a zablokowane /login odcina gracza od sieci.")
+        @CustomKey("ignored-commands")
+        public List<String> ignoredCommands = new ArrayList<>(List.of(
+                "login", "logowanie", "l", "register", "rejestracja", "reg", "zaloguj",
+                "zarejestruj", "zmienhaslo", "changepassword", "nowehaslo", "2fa"));
+    }
+
     public static class ServerCountsSection extends OkaeriConfig {
 
         @Comment("Czy proxy rozglasza liczbe graczy na kazdym serwerze.")

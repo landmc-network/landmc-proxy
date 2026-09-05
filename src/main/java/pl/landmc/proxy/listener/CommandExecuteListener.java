@@ -10,6 +10,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import pl.landmc.platform.proxy.notice.VelocityNoticeService;
+import pl.landmc.platform.text.AdvertText;
 import pl.landmc.proxy.config.ProxyConfig;
 import pl.landmc.proxy.config.ProxyMessages;
 import pl.landmc.proxy.cooldown.CooldownTime;
@@ -54,6 +55,32 @@ public final class CommandExecuteListener {
         }
     }
 
+    /**
+     * Whether this command carries an address somebody is not allowed to send.
+     *
+     * <p>Only the commands the proxy answers itself need this: anything it forwards is seen by
+     * the backend, where the chat plugin applies the same rule to the same list. What is left
+     * is {@code /msg} and its relatives, which is the channel an advertiser would choose
+     * anyway - it reaches one person rather than a room.
+     *
+     * <p>Logging in is exempt, and has to be: a password with a full stop in it looks exactly
+     * like an address, and a blocked {@code /login} is a player who cannot get in at all.
+     */
+    private boolean advertises(Player player, String root, String command) {
+        ProxyConfig.AdvertsSection adverts = this.config.adverts;
+        if (!adverts.enabled || player.hasPermission(adverts.permission)) {
+            return false;
+        }
+
+        for (String ignored : adverts.ignoredCommands) {
+            if (ignored.equalsIgnoreCase(root)) {
+                return false;
+            }
+        }
+
+        return AdvertText.advertises(command, adverts.fragments);
+    }
+
     @Subscribe
     public void onCommand(CommandExecuteEvent event) {
         if (!(event.getCommandSource() instanceof Player player)) {
@@ -66,6 +93,12 @@ public final class CommandExecuteListener {
 
         if (this.isBlockedByCooldown(player, root)) {
             event.setResult(CommandExecuteEvent.CommandResult.denied());
+            return;
+        }
+
+        if (this.advertises(player, root, event.getCommand())) {
+            event.setResult(CommandExecuteEvent.CommandResult.denied());
+            this.notices.viewer(player, messages -> messages.advert);
             return;
         }
 

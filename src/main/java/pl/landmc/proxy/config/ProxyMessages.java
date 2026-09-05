@@ -78,6 +78,12 @@ public class ProxyMessages extends OkaeriConfig {
     public Notice serverList = Notice.chat("<green><bold>SIEĆ</bold> <gray>Dostępne serwery: <white>{SERVERS}</white>");
 
     @Comment("")
+    @Comment("")
+    @Comment("Gdy komenda niesie adres innego serwera.")
+    @CustomKey("advert")
+    public Notice advert = Notice.chat(
+            "<red>Błąd> <gray>Nie możesz wysyłać odnośników.");
+
     @CustomKey("maintenance-enabled")
     public Notice maintenanceEnabled = Notice.chat(
             "<green><bold>SERWIS</bold> <gray>Tryb serwisowy <white>włączony</white>."
