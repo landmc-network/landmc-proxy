@@ -27,7 +27,18 @@ public enum StreamPlatform {
      * allowed to do: a platform that cannot be checked is announced only by somebody trusted
      * enough to be given the permission for it.
      */
-    TIKTOK("TikTok", false);
+    TIKTOK("TikTok", false),
+
+    /**
+     * YouTube.
+     *
+     * <p>Not verifiable, and that is the whole reason it is here. The ranks this network sells
+     * to creators are YT and MINIYT, and the previous version announced them with nothing but a
+     * link somebody had typed in - no check that anybody was live. Asking YouTube whether they
+     * are needs a key of its own, and a feature that does not work without one is worse than a
+     * feature that trusts the person it was given to.
+     */
+    YOUTUBE("YouTube", false);
 
     private final String displayName;
     private final boolean verifiable;

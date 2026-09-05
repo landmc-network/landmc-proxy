@@ -39,6 +39,17 @@ public record StreamProfile(StreamPlatform platform, String identifier, String u
     private static final Set<String> TWITCH_HOSTS = Set.of("twitch.tv", "www.twitch.tv", "m.twitch.tv");
     private static final Set<String> KICK_HOSTS = Set.of("kick.com", "www.kick.com");
     private static final Set<String> TIKTOK_HOSTS = Set.of("tiktok.com", "www.tiktok.com", "m.tiktok.com");
+    private static final Set<String> YOUTUBE_HOSTS =
+            Set.of("youtube.com", "www.youtube.com", "m.youtube.com");
+
+    /**
+     * A YouTube handle, the {@code @name} form every channel has had since 2022.
+     *
+     * <p>Only that form. A channel is also reachable as {@code /channel/UC...} and as the old
+     * {@code /c/name}, and both of those are addresses rather than names - storing one means the
+     * announcement shows a string of random characters where a person's name should be.
+     */
+    private static final Pattern YOUTUBE_HANDLE = Pattern.compile("[A-Za-z0-9._-]{3,30}");
 
     public StreamProfile {
         Objects.requireNonNull(platform, "platform");
@@ -103,6 +114,9 @@ public record StreamProfile(StreamPlatform platform, String identifier, String u
         if (TIKTOK_HOSTS.contains(normalised)) {
             return tikTokHandle(uri).map(StreamProfile::tikTok);
         }
+        if (YOUTUBE_HOSTS.contains(normalised)) {
+            return youTubeHandle(uri).map(StreamProfile::youTube);
+        }
 
         return Optional.empty();
     }
@@ -162,6 +176,41 @@ public record StreamProfile(StreamPlatform platform, String identifier, String u
         return Optional.ofNullable(handle).filter(value -> TIKTOK_HANDLE.matcher(value).matches());
     }
 
+    /**
+     * YouTube handles are {@code /@name}, optionally followed by {@code /live} or
+     * {@code /streams}.
+     *
+     * <p>The two trailing segments are what a creator copies out of the address bar while they
+     * are streaming, so refusing them would refuse the most likely thing anybody pastes.
+     */
+    private static Optional<String> youTubeHandle(URI uri) {
+        String path = uri.getPath();
+        if (path == null) {
+            return Optional.empty();
+        }
+
+        String handle = null;
+        for (String segment : path.split("/")) {
+            if (segment.isEmpty()) {
+                continue;
+            }
+
+            if (handle == null) {
+                if (!segment.startsWith("@")) {
+                    return Optional.empty();
+                }
+                handle = segment.substring(1);
+                continue;
+            }
+
+            if (!segment.equalsIgnoreCase("live") && !segment.equalsIgnoreCase("streams")) {
+                return Optional.empty();
+            }
+        }
+
+        return Optional.ofNullable(handle).filter(value -> YOUTUBE_HANDLE.matcher(value).matches());
+    }
+
     public static StreamProfile twitch(String login) {
         return new StreamProfile(
                 StreamPlatform.TWITCH, login, "https://www.twitch.tv/" + login);
@@ -176,12 +225,18 @@ public record StreamProfile(StreamPlatform platform, String identifier, String u
                 StreamPlatform.TIKTOK, handle, "https://www.tiktok.com/@" + handle + "/live");
     }
 
+    public static StreamProfile youTube(String handle) {
+        return new StreamProfile(
+                StreamPlatform.YOUTUBE, handle, "https://www.youtube.com/@" + handle + "/live");
+    }
+
     /** Rebuilds a stored profile without parsing the URL again. */
     public static StreamProfile of(StreamPlatform platform, String identifier) {
         return switch (platform) {
             case TWITCH -> twitch(identifier);
             case KICK -> kick(identifier);
             case TIKTOK -> tikTok(identifier);
+            case YOUTUBE -> youTube(identifier);
         };
     }
 }

@@ -61,6 +61,19 @@ class StreamProfileTest {
 
         // The link people actually copy is the one with /live on the end.
         assertEquals(tikTok, StreamProfile.parse("https://www.tiktok.com/@crispi/live").orElseThrow());
+
+        StreamProfile youTube = StreamProfile.parse("https://www.youtube.com/@crispi").orElseThrow();
+        assertEquals(StreamPlatform.YOUTUBE, youTube.platform());
+        assertEquals("crispi", youTube.identifier());
+        assertEquals("https://www.youtube.com/@crispi/live", youTube.url());
+
+        // Both of the things a creator copies while they are actually streaming.
+        assertEquals(youTube, StreamProfile.parse("https://www.youtube.com/@crispi/live").orElseThrow());
+        assertEquals(youTube, StreamProfile.parse("https://youtube.com/@crispi/streams").orElseThrow());
+
+        // A channel id is an address rather than a name, and an announcement carrying one shows
+        // a string of random characters where a person's name should be.
+        assertTrue(StreamProfile.parse("https://www.youtube.com/channel/UCabc123").isEmpty());
     }
 
     @ParameterizedTest
