@@ -83,6 +83,9 @@ public final class MenuActions {
      */
     private void onProfileAction(Player player, MenuAction action) {
         switch (action.action()) {
+            // Sent by the lobby's hotbar. A backend cannot run a proxy command itself - a
+            // command dispatched there never leaves it - so it asks for the menu instead.
+            case "open" -> this.dispatch(player, "profil");
             case "friends" -> this.dispatch(player, "friend");
             case "premium" -> this.dispatch(player, "premium");
             default -> this.logger.debug("Unknown profile menu action: {}", action.action());
@@ -99,6 +102,12 @@ public final class MenuActions {
     }
 
     private void onServersAction(Player player, MenuAction action) {
+        if ("open".equals(action.action())) {
+            // The lobby's compass. See the note on the profile's "open".
+            this.dispatch(player, "serwery");
+            return;
+        }
+
         if (!"connect".equals(action.action())) {
             this.logger.debug("Unknown servers menu action: {}", action.action());
             return;
