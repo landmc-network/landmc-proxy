@@ -65,6 +65,7 @@ import pl.landmc.proxy.menu.FriendMenuService;
 import pl.landmc.proxy.menu.MenuActions;
 import pl.landmc.proxy.menu.MenuBridge;
 import pl.landmc.proxy.menu.ServerHealth;
+import pl.landmc.proxy.messaging.ServerCountBroadcaster;
 import pl.landmc.proxy.live.KickStatusClient;
 import pl.landmc.proxy.live.LiveRepository;
 import pl.landmc.proxy.live.LiveService;
@@ -125,6 +126,7 @@ public final class ProxyBootstrap {
     private FriendService friends;
     private MenuBridge menuBridge;
     private ServerHealth serverHealth;
+    private ServerCountBroadcaster serverCounts;
     private VoucherService vouchers;
     private LiveService live;
     private ReportService reports;
@@ -212,6 +214,19 @@ public final class ProxyBootstrap {
         this.serverHealth = new ServerHealth(this.proxy, this.config, this.logger);
         if (this.config.menus.serversEnabled) {
             this.serverHealth.start(this.container.getInstance().orElseThrow());
+        }
+
+        // Only the proxy can count the people on another server, so the signs in the lobby
+        // are told rather than left to guess.
+        if (this.config.serverCounts.enabled) {
+            this.serverCounts = new ServerCountBroadcaster(
+                    this.proxy,
+                    this.container.getInstance().orElseThrow(),
+                    this.bus,
+                    this.serverHealth,
+                    java.time.Duration.ofSeconds(
+                            Math.max(1L, this.config.serverCounts.intervalSeconds)));
+            this.serverCounts.start();
         }
 
         ServerMenuService serverMenu =
@@ -306,6 +321,11 @@ public final class ProxyBootstrap {
         this.lifecycle.disableAll();
 
         this.friends = null;
+
+        if (this.serverCounts != null) {
+            this.serverCounts.stop();
+            this.serverCounts = null;
+        }
 
         if (this.serverHealth != null) {
             this.serverHealth.stop();

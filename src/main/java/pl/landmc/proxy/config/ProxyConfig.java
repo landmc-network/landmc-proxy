@@ -75,6 +75,10 @@ public class ProxyConfig extends OkaeriConfig {
     @Comment("")
     public LiveSection live = new LiveSection();
 
+    @CustomKey("server-counts")
+    public ServerCountsSection serverCounts = new ServerCountsSection();
+
+    @Comment("")
     public MessagingSection messaging = new MessagingSection();
 
     public static class ProxySection extends OkaeriConfig {
@@ -570,6 +574,27 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Krotszy odstep po nieudanej probie, zeby literowka nie blokowala na dlugo.")
         @CustomKey("error-cooldown-seconds")
         public int errorCooldownSeconds = 5;
+    }
+
+    /**
+     * Telling the backends how busy each server is.
+     *
+     * <p>Only the proxy can count the people on a server nobody here is standing on, so a sign
+     * in the lobby saying how many are on SkyBlock has to be told. Broadcast rather than asked
+     * for: the number is the same for everybody, and a request per sign per two seconds would
+     * be a conversation about something already public.
+     */
+    public static class ServerCountsSection extends OkaeriConfig {
+
+        @Comment("Czy proxy rozglasza liczbe graczy na kazdym serwerze.")
+        @Comment("Bez tego napisy nad figurkami na lobby nie beda znaly liczb.")
+        public boolean enabled = true;
+
+        @Comment("")
+        @Comment("Co ile sekund. Dwie sekundy to tyle, co na starym LandMC.")
+        @Comment("Nic nie leci, kiedy w sieci nie ma nikogo.")
+        @CustomKey("interval-seconds")
+        public long intervalSeconds = 2L;
     }
 
     public static class MessagingSection extends OkaeriConfig {

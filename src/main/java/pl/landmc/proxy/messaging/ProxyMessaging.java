@@ -55,7 +55,8 @@ public final class ProxyMessaging {
         MessageRegistry registry = new MessageRegistry()
                 .register(PingMessage.TYPE, PingMessage.class)
                 .register(PongMessage.TYPE, PongMessage.class)
-                .register(ResourcePackRebuiltMessage.TYPE, ResourcePackRebuiltMessage.class);
+                .register(ResourcePackRebuiltMessage.TYPE, ResourcePackRebuiltMessage.class)
+                .register(ServerCountsMessage.TYPE, ServerCountsMessage.class);
 
         MessageSerializer serializer = new MessageSerializer(registry);
         MessageTransport transport = transport(config, serverId, serializer, logger);
