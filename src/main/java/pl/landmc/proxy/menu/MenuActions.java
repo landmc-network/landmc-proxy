@@ -72,6 +72,7 @@ public final class MenuActions {
         }
         bridge.handler(MenuKind.SERVERS, this::onServersAction);
         bridge.handler(MenuKind.PROFILE, this::onProfileAction);
+        bridge.handler(MenuKind.STATISTICS, this::onStatisticsAction);
     }
 
     /**
@@ -90,6 +91,7 @@ public final class MenuActions {
             // The tile the old profile had: straight into the rank shop.
             case "shop" -> this.dispatch(player, "rangi");
             case "visual" -> this.dispatch(player, "rangiwizualne");
+            case "statistics" -> this.dispatch(player, "statystyki");
             case "premium" -> this.dispatch(player, "premium");
             default -> this.logger.debug("Unknown profile menu action: {}", action.action());
         }
@@ -101,8 +103,18 @@ public final class MenuActions {
             case "requests" -> this.dispatch(player, "friend zaproszenia");
             // The tab strip: back to the profile this list was opened from.
             case "profile" -> this.dispatch(player, "profil");
+            case "statistics" -> this.dispatch(player, "statystyki");
             case "join" -> this.joinFriend(player, action.argument());
             default -> this.logger.debug("Unknown friends menu action: {}", action.action());
+        }
+    }
+
+    /** The statistics tab is a strip and nothing else; both of its tabs lead elsewhere. */
+    private void onStatisticsAction(Player player, MenuAction action) {
+        switch (action.action()) {
+            case "profile" -> this.dispatch(player, "profil");
+            case "friends" -> this.dispatch(player, "friend");
+            default -> this.logger.debug("Unknown statistics action: {}", action.action());
         }
     }
 

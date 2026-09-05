@@ -361,6 +361,20 @@ public class ProxyMessages extends OkaeriConfig {
     @Comment("")
     @Comment("Menu rysuje backend; to jest odpowiedz, gdy nie da sie go otworzyc -")
     @Comment("gracz jest miedzy serwerami albo backend nie ma wtyczki menu.")
+    @Comment("")
+    @Comment("Etykiety w zakladce statystyk. Wartosci dokleja proxy.")
+    @CustomKey("statistics-rank")
+    public String statisticsRank = "<green>Ranga";
+
+    @CustomKey("statistics-no-rank")
+    public String statisticsNoRank = "<gray>brak";
+
+    @CustomKey("statistics-server")
+    public String statisticsServer = "<green>Serwer";
+
+    @CustomKey("statistics-friends")
+    public String statisticsFriends = "<green>Znajomi";
+
     @CustomKey("menu-unavailable")
     public Notice menuUnavailable =
             Notice.chat("<red>Błąd> <gray>Nie udało się otworzyć menu. Spróbuj za chwilę.");
