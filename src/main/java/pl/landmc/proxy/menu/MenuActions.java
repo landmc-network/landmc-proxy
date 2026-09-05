@@ -87,6 +87,8 @@ public final class MenuActions {
             // command dispatched there never leaves it - so it asks for the menu instead.
             case "open" -> this.dispatch(player, "profil");
             case "friends" -> this.dispatch(player, "friend");
+            // The tile the old profile had: straight into the rank shop.
+            case "shop" -> this.dispatch(player, "rangi");
             case "premium" -> this.dispatch(player, "premium");
             default -> this.logger.debug("Unknown profile menu action: {}", action.action());
         }
@@ -96,6 +98,8 @@ public final class MenuActions {
         switch (action.action()) {
             case "remove" -> this.runAsPlayer(player, "friend usun ", action.argument());
             case "requests" -> this.dispatch(player, "friend zaproszenia");
+            // The tab strip: back to the profile this list was opened from.
+            case "profile" -> this.dispatch(player, "profil");
             case "join" -> this.joinFriend(player, action.argument());
             default -> this.logger.debug("Unknown friends menu action: {}", action.action());
         }
