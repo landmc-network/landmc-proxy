@@ -71,6 +71,22 @@ public final class MenuActions {
             bridge.handler(MenuKind.FRIENDS, this::onFriendsAction);
         }
         bridge.handler(MenuKind.SERVERS, this::onServersAction);
+        bridge.handler(MenuKind.PROFILE, this::onProfileAction);
+    }
+
+    /**
+     * The profile's tiles are doors, not switches.
+     *
+     * <p>Each one runs the command that owns what it leads to - the friends list, the premium
+     * login setting - so the profile never has a second opinion about either, and a tile can
+     * reach nothing its owner could not already be asked for.
+     */
+    private void onProfileAction(Player player, MenuAction action) {
+        switch (action.action()) {
+            case "friends" -> this.dispatch(player, "friend");
+            case "premium" -> this.dispatch(player, "premium");
+            default -> this.logger.debug("Unknown profile menu action: {}", action.action());
+        }
     }
 
     private void onFriendsAction(Player player, MenuAction action) {

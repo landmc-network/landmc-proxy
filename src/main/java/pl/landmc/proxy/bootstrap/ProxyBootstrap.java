@@ -29,6 +29,7 @@ import pl.landmc.proxy.command.PrivateMessageCommands;
 import pl.landmc.proxy.command.SendCommand;
 import pl.landmc.proxy.command.ServerCommand;
 import pl.landmc.proxy.command.LiveCommand;
+import pl.landmc.proxy.command.ProfileCommand;
 import pl.landmc.proxy.command.ServerMenuCommand;
 import pl.landmc.proxy.command.TestMessageCommand;
 import pl.landmc.proxy.config.ProxyConfig;
@@ -63,6 +64,7 @@ import pl.landmc.proxy.live.KickStatusClient;
 import pl.landmc.proxy.live.LiveRepository;
 import pl.landmc.proxy.live.LiveService;
 import pl.landmc.proxy.live.TwitchStatusClient;
+import pl.landmc.proxy.menu.ProfileMenuService;
 import pl.landmc.proxy.menu.ServerMenuService;
 import pl.landmc.proxy.rank.RankProvider;
 import pl.landmc.proxy.voucher.VoucherService;
@@ -422,6 +424,9 @@ public final class ProxyBootstrap {
         if (this.config.menus.serversEnabled) {
             optional.add(new ServerMenuCommand(serverMenu, this.menuBridge, notices));
         }
+
+        optional.add(new ProfileCommand(
+                new ProfileMenuService(this.friends, ranks), this.menuBridge, notices, this.logger));
 
         if (this.live != null) {
             optional.add(new LiveCommand(
