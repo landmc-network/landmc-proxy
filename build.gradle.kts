@@ -123,20 +123,21 @@ tasks.shadowJar {
 }
 
 /**
- * Fails the build if H2 ends up relocated after all.
- *
- * H2 writes Java class names into the .mv.db file, so a relocated build produces a database
- * only that build can open - and the failure surfaces on somebody's server later, as a plugin
- * that will not start on a database it wrote itself. Adding "org.h2" back to the relocation
- * list is a one-line change with no visible consequence at build time, so the build checks the
- * jar rather than relying on the comment being read.
- */
-/**
  * Packages that must reach the runtime under their real names.
  *
- * H2 because its file format records class names; the JDBC drivers because the platform looks
- * them up by name (DatabaseType.driverClassName) and because a driver is registered through
- * META-INF/services, which a relocation rewrites out from under it.
+ * This plugin ships the JDBC drivers for every LandMC plugin on the proxy - the others declare
+ * a dependency on it and package none of their own, because Velocity plugin class loaders can
+ * see one another and a driver present twice is one class defined twice, which is a
+ * LinkageError rather than a slower connection. That only works while the names here are the
+ * real ones: the platform asks for a driver by name (DatabaseType.driverClassName), and a
+ * driver registers itself through META-INF/services, which a relocation rewrites out from
+ * under it.
+ *
+ * H2 has a second reason. It writes Java class names into the .mv.db file, so a relocated
+ * build produces a database only that build can open, and the failure surfaces later as a
+ * plugin that will not start on a database it wrote itself. Putting either package back into
+ * the relocation list is a one-line change with no visible consequence at build time, so the
+ * build looks inside the jar rather than trusting this comment to be read.
  */
 val relocatedDatabaseLibraries = listOf("org/h2/", "org/mariadb/")
 
