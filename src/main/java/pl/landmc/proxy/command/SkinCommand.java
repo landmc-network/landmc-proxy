@@ -44,6 +44,11 @@ public class SkinCommand {
             return;
         }
 
+        if (!this.skins.mayWear(player, skinName)) {
+            this.notices.create().viewer(player).notice(messages -> messages.skinProtected).send();
+            return;
+        }
+
         long remaining = this.skins.remainingCooldownSeconds(player.getUniqueId());
         if (remaining > 0) {
             this.notices.create()
@@ -61,6 +66,45 @@ public class SkinCommand {
                 .send();
 
         this.skins.apply(player, skinName).thenAccept(result -> this.reply(player, skinName, result));
+    }
+
+    /**
+     * {@code /skin przywroc} - zdejmuje wybranego skina.
+     *
+     * <p>Osobna sciezka, a nie {@code /skin <wlasny nick>}: to drugie wyglada na to samo, ale
+     * zostawia w magazynie wpis, ze gracz nosi skina o nazwie takiej samej jak jego nick - i
+     * przestaje dzialac w dniu, w ktorym zmieni nick.
+     */
+    @Execute(name = "przywroc", aliases = {"restart", "reset", "zdejmij"})
+    void restore(@Context Player player) {
+        if (!player.hasPermission(this.skins.permission())) {
+            this.notices.create().viewer(player).notice(messages -> messages.skinNoPermission).send();
+            return;
+        }
+
+        long remaining = this.skins.remainingCooldownSeconds(player.getUniqueId());
+        if (remaining > 0) {
+            this.notices.create()
+                    .viewer(player)
+                    .notice(messages -> messages.skinCooldown)
+                    .formatter(new Formatter().register("{SECONDS}", Long.toString(remaining)))
+                    .send();
+            return;
+        }
+
+        this.skins.restore(player).thenAccept(result -> {
+            if (!player.isActive()) {
+                return;
+            }
+
+            this.notices.create()
+                    .viewer(player)
+                    .notice(result == SkinService.SkinResult.APPLIED
+                            ? messages -> messages.skinRestored
+                            : messages -> messages.skinFailed)
+                    .formatter(new Formatter().register("{SKIN}", player.getUsername()))
+                    .send();
+        });
     }
 
     private void reply(Player player, String skinName, SkinService.SkinResult result) {

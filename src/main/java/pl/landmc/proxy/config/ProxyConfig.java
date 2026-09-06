@@ -591,6 +591,18 @@ public class ProxyConfig extends OkaeriConfig {
         @Comment("Krotszy odstep po nieudanej probie, zeby literowka nie blokowala na dlugo.")
         @CustomKey("error-cooldown-seconds")
         public int errorCooldownSeconds = 5;
+
+        @Comment("")
+        @Comment("Nicki, ktorych nikt nie moze zalozyc. Stary serwer trzymal tu nicki ekipy,")
+        @Comment("zeby nikt nie chodzil po spawnie jako wlasciciel - i to jest jedyny powod,")
+        @Comment("dla ktorego ta lista istnieje. Uprawnienie ponizej ja omija.")
+        @CustomKey("protected-skins")
+        public List<String> protectedSkins = new ArrayList<>();
+
+        @Comment("")
+        @Comment("Uprawnienie omijajace liste wyzej.")
+        @CustomKey("protected-bypass")
+        public String protectedBypass = "landmc.skin.protected";
     }
 
     /**

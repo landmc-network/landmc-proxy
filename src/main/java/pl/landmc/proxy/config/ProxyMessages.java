@@ -549,4 +549,13 @@ public class ProxyMessages extends OkaeriConfig {
 
     @CustomKey("skin-no-permission")
     public Notice skinNoPermission = Notice.chat("<red>Błąd> <gray>Nie możesz zmieniać skina.");
+
+    @Comment("")
+    @CustomKey("skin-restored")
+    public Notice skinRestored = Notice.chat(
+            "<green><bold>SKIN</bold> <gray>Przywrócono Twój własny skin.");
+
+    @CustomKey("skin-protected")
+    public Notice skinProtected = Notice.chat(
+            "<red>Błąd> <gray>Tego skina nie można założyć.");
 }

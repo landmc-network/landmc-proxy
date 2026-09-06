@@ -68,6 +68,20 @@ final class SkinsRestorerApiBridge {
         invoke(method, playerStorage, playerId, skinIdentifier);
     }
 
+    /**
+     * Zdejmuje zapisanego skina, zeby gracz wrocil do swojego.
+     *
+     * <p>Szukane po nazwie i liczbie argumentow, jak reszta tego mostu: SkinsRestorer zmienia
+     * sygnatury miedzy wersjami, a plugin, ktory przestaje sie uruchamiac po aktualizacji
+     * cudzego jara, jest gorszy niz plugin bez jednej komendy.
+     */
+    static void removePlayerSkin(Object playerStorage, UUID playerId)
+            throws ReflectiveOperationException {
+
+        Method method = findMethod(playerStorage, "removeSkinIdOfPlayer", 1);
+        invoke(method, playerStorage, playerId);
+    }
+
     static Object skinApplier(Object skinsRestorer, Class<?> playerClass)
             throws ReflectiveOperationException {
         return skinsRestorer.getClass().getMethod("getSkinApplier", Class.class).invoke(skinsRestorer, playerClass);

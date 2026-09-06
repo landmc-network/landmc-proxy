@@ -78,6 +78,65 @@ public final class SkinService {
         return skinName != null && SKIN_NAME.matcher(skinName).matches();
     }
 
+    /**
+     * Czy tego skina wolno komus zalozyc.
+     *
+     * <p>Lista jest po to, zeby nikt nie chodzil po spawnie jako wlasciciel serwera. Oryginal
+     * mial te cztery nicki wpisane w kod i porownywal je z ranga; tutaj to plik i uprawnienie,
+     * wiec nowy czlonek ekipy nie wymaga wydania pluginu.
+     */
+    public boolean mayWear(Player player, String skinName) {
+        if (player.hasPermission(this.config.skin.protectedBypass)) {
+            return true;
+        }
+
+        for (String guarded : this.config.skin.protectedSkins) {
+            if (guarded.equalsIgnoreCase(skinName)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Zdejmuje wybranego skina i przywraca wlasny.
+     *
+     * <p>Tak samo, jak zakladanie: przez magazyn SkinsRestorera, zeby zmiana przezyla
+     * przelaczenie serwera i wylogowanie. Bez tego "przywroc" dzialaloby do najblizszego
+     * wejscia na serwer.
+     */
+    public CompletableFuture<SkinResult> restore(Player player) {
+        Objects.requireNonNull(player, "player");
+
+        UUID playerId = player.getUniqueId();
+        this.setCooldown(playerId, this.config.skin.successCooldownSeconds);
+
+        CompletableFuture<SkinResult> result = new CompletableFuture<>();
+        this.proxy.getScheduler()
+                .buildTask(this.plugin, () -> result.complete(this.restoreBlocking(player)))
+                .schedule();
+        return result;
+    }
+
+    private SkinResult restoreBlocking(Player player) {
+        try {
+            Object skinsRestorer = SkinsRestorerApiBridge.provider();
+            Object playerStorage = SkinsRestorerApiBridge.invokeNoArgs(
+                    skinsRestorer, "getPlayerStorage");
+
+            SkinsRestorerApiBridge.removePlayerSkin(playerStorage, player.getUniqueId());
+
+            Object applier = SkinsRestorerApiBridge.skinApplier(skinsRestorer, Player.class);
+            SkinsRestorerApiBridge.applySkin(applier, player);
+            return SkinResult.APPLIED;
+        }
+        catch (ReflectiveOperationException | RuntimeException | NoClassDefFoundError failed) {
+            this.setCooldown(player.getUniqueId(), this.config.skin.errorCooldownSeconds);
+            this.logger.warn("Could not restore the skin of {}.", player.getUsername(), failed);
+            return SkinResult.FAILED;
+        }
+    }
+
     public String permission() {
         return this.config.skin.permission;
     }
